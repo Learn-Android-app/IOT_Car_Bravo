@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">IOT_Android</string>
-    <string name="action_settings">Settings</string>
+    <string name="app_name">IOT小车控制器</string>
+    <string name="action_settings">设置</string>
     <string name="hello_world">Hello world!</string>
+    <string name="title_activity_phone">控制器</string>
+    <string name="title_activity_start">欢迎使用</string>
+    <string name="title_activity_test">TestActivity</string>
 
 </resources>

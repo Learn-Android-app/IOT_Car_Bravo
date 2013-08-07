@@ -110,10 +110,9 @@ public class Result_GPS {
 		param.setSpeed(speed);
 	}
 	
-	public Result_GPS getGPS(String jsonresult) {
+	public Result_GPS getResult_GPS(String jsonresult) {
 		Result_GPS result_GPS = Result_GPS.getInstance();
 		try {
-			result_GPS.result = new JSONObject(jsonresult).getString("result");
 			JSONObject param = new JSONObject(jsonresult).getJSONObject("param");			
 			result_GPS.setLongtitude(param.getDouble("longtitude"));
 			result_GPS.setSpeed(param.getDouble("speed"));

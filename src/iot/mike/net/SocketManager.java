@@ -2,21 +2,27 @@ package iot.mike.net;
 
 import iot.mike.setting.SettingData;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import android.os.Handler;
+import android.util.Log;
 
 public class SocketManager {
 	private SocketManager(){}
-	private Handler mainHandler = null;
+	private Handler MainActivityHandler = null;
 	private Socket MainSocket = null;
-	private DataInputStream reader = null;
-	private DataOutputStream writer = null;
-	
+	private BufferedReader reader = null;
+	private BufferedWriter writer = null;
+	private Thread readFromCarThread = null;
 	
 	private static class SocketManagerHolder{
 		public static SocketManager socketManager = new SocketManager();
@@ -30,9 +36,9 @@ public class SocketManager {
 	 * 设置主界面控制器
 	 * @param handler
 	 */
-	public void setHandler(Handler handler){
-		mainHandler = null;
-		mainHandler = handler;
+	public void setKeyBoardActivityHandler(Handler handler){
+		MainActivityHandler = null;
+		MainActivityHandler = handler;
 	}
 	
 	/**
@@ -44,25 +50,41 @@ public class SocketManager {
 				|| SettingData.CarMainPort == 0) {
 			return false;
 		}
-		
-		try {
-			MainSocket = new Socket(SettingData.CarIP, 
-					SettingData.CarMainPort);
-			reader = new DataInputStream(MainSocket.getInputStream());
-			writer = new DataOutputStream(MainSocket.getOutputStream());
-			return true;
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}finally{
-			try {MainSocket.close();} 
-			catch (IOException e) 
-			{e.printStackTrace();}
-			MainSocket = null;
-		}
+		Thread startLinkThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					MainSocket = new Socket(SettingData.CarIP, 
+							SettingData.CarMainPort);
+					Log.d("建立连接", "成功!");
+					reader = new BufferedReader(
+							new InputStreamReader(
+									MainSocket.getInputStream()));
+					writer = new BufferedWriter(
+							new OutputStreamWriter(
+									MainSocket.getOutputStream()));
+					readFromCarThread = new Thread(
+							new ReadFromCarRunnable(reader, 
+									MainActivityHandler));
+					readFromCarThread.start();
+					NetUtil.sendList(writer);
+				} catch (UnknownHostException e) {
+					e.printStackTrace();
+					try {MainSocket.close();} 
+					catch (Exception e2) 
+					{e.printStackTrace();}
+					MainSocket = null;
+				} catch (IOException e) {
+					e.printStackTrace();
+					try {MainSocket.close();} 
+					catch (Exception e2) 
+					{e.printStackTrace();}
+					MainSocket = null;
+				}
+			}
+		});
+		startLinkThread.start();
+		return true;
 	}
 	
 	/**
@@ -88,7 +110,7 @@ public class SocketManager {
 	public boolean sendOrder(String jsonorder){
 		try {
 			synchronized (writer) {
-				writer.writeBytes(jsonorder + "\n");
+				writer.write(jsonorder + "\n");
 				writer.flush();
 			}
 			return true;
@@ -98,11 +120,13 @@ public class SocketManager {
 		}
 	}
 	
+
+	
 	/**
 	 * 返回读取数据的流
 	 * @return DataInputStream
 	 */
-	public DataInputStream getReader() {
+	public BufferedReader getReader() {
 		return this.reader;
 	}
 }

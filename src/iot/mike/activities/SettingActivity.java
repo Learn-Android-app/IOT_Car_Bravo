@@ -1,6 +1,6 @@
-package iot.mike.setting;
+package iot.mike.activities;
 
-import iot.mike.activities.R;
+import iot.mike.setting.SettingData;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;

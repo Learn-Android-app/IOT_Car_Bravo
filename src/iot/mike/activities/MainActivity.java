@@ -1,23 +1,17 @@
 package iot.mike.activities;
 
+import iot.mike.data.ResultType;
+import iot.mike.data.Result_List;
+import iot.mike.data.Result_USBCamera;
+import iot.mike.mapview.OfflineMapView;
+import iot.mike.net.SocketManager;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
-import iot.mike.data.Action_Close;
-import iot.mike.data.ResultType;
-import iot.mike.data.Result_GPS;
-import iot.mike.net.SocketManager;
-import iot.mike.setting.SettingActivity;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONTokener;
-
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,19 +20,41 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Base64;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
+import android.widget.TextView;
 
+/**
+ * 使用键盘和头盔跟踪模块的活动
+ * @author mikecoder
+ * @date 2013-08-06
+ */
 public class MainActivity extends Activity {
 	private SocketManager socketManager = SocketManager.getInstance();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		socketManager.setHandler(mainHandler);
+		setContentView(R.layout.activity_keyboard);
+		socketManager.setKeyBoardActivityHandler(KeyBoardActivityHandler);
+		socketManager.startLink();
 		
 		Intent intent = new Intent(getApplicationContext(), SettingActivity.class);
 		//startActivity(intent);
+		
+		String string = "{\"result\":\"list\",\"param\":[\"close\",\"list\",\"okcamera\"]}";
+		Result_List result_List = Result_List.getInstance();
+		result_List = result_List.getResult_List(string);
+		for (String test : result_List.getParams()) {
+			Log.e(":" + test, ":" + test);
+		}
+		
+		String string2 = "{\"result\":\"usbcamera\",\"param\":{\"frame\":\"BASE64编码的数据\"}}";
+		Result_USBCamera result_USBCamera = Result_USBCamera.getInstance();
+		result_USBCamera.getResult_USBCamera(string2);
+		Log.e(string2, result_USBCamera.getFrame());
+		
+		
 		try {
 			FileInputStream reader = new FileInputStream(
 					new File(Environment.getExternalStorageDirectory().toString() 
@@ -71,7 +87,15 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
-	private Handler mainHandler = new Handler(){
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		Log.e(keyCode + ":", event.toString());
+		TextView textView = (TextView)findViewById(R.id.textView1);
+		textView.setText(event.toString());
+		return super.onKeyDown(keyCode, event);
+	}
+	
+	private Handler KeyBoardActivityHandler = new Handler(){
 		@Override
 		public void handleMessage(Message message){
 			switch (message.what) {
@@ -103,3 +127,5 @@ public class MainActivity extends Activity {
 		}
 	};
 }
+
+
