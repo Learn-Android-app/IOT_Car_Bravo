@@ -1,5 +1,6 @@
 package iot.mike.activities;
 
+import h264.com.VView;
 import iot.mike.data.ResultType;
 import iot.mike.data.Result_List;
 import iot.mike.data.Result_USBCamera;
@@ -31,54 +32,21 @@ import android.widget.TextView;
  */
 public class MainActivity extends Activity {
 	private SocketManager socketManager = SocketManager.getInstance();
+	private OfflineMapView mapView;
+	private VView videoView;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_keyboard);
+		initViews();
+		
 		socketManager.setKeyBoardActivityHandler(KeyBoardActivityHandler);
 		socketManager.startLink();
 		
 		Intent intent = new Intent(getApplicationContext(), SettingActivity.class);
 		//startActivity(intent);
 		
-		String string = "{\"result\":\"list\",\"param\":[\"close\",\"list\",\"okcamera\"]}";
-		Result_List result_List = Result_List.getInstance();
-		result_List = result_List.getResult_List(string);
-		for (String test : result_List.getParams()) {
-			Log.e(":" + test, ":" + test);
-		}
-		
-		String string2 = "{\"result\":\"usbcamera\",\"param\":{\"frame\":\"BASE64编码的数据\"}}";
-		Result_USBCamera result_USBCamera = Result_USBCamera.getInstance();
-		result_USBCamera.getResult_USBCamera(string2);
-		Log.e(string2, result_USBCamera.getFrame());
-		
-		
-		try {
-			FileInputStream reader = new FileInputStream(
-					new File(Environment.getExternalStorageDirectory().toString() 
-							+ File.separator + "wubin64.base64"));
-			FileOutputStream writer = new FileOutputStream(
-					new File(Environment.getExternalStorageDirectory().toString() 
-							+ File.separator + "wubin64.h264"));
-			int size = 0;
-			byte[] buffer = new byte[254800];
-			while ((size = reader.read(buffer)) != -1) {
-				String aString = new String(buffer, 0, size);
-				byte[] dataout = Base64.decode(aString, 0);
-				buffer = null;
-				buffer = new byte[254800];
-				writer.write(dataout);
-				writer.flush();
-			}
-			writer.close();
-			reader.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
@@ -87,12 +55,11 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
+	//键盘数据
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		Log.e(keyCode + ":", event.toString());
-		TextView textView = (TextView)findViewById(R.id.textView1);
-		textView.setText(event.toString());
-		return super.onKeyDown(keyCode, event);
+		return false;
 	}
 	
 	private Handler KeyBoardActivityHandler = new Handler(){
@@ -126,6 +93,12 @@ public class MainActivity extends Activity {
 			}
 		}
 	};
+	
+	private void initViews(){
+		videoView = (VView)findViewById(R.id.video_VV);
+		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
+		mapView.setLocation(120.64248919487, 31.30230587142129, 18, 0, 20, 20);
+	}
 }
 
 

@@ -42,10 +42,10 @@ public class OfflineMapView extends ImageView {
 	private static final int ZOOM = 2;
 	private int zoom_Map = 18;
 	private Location location = new Location();
-	private Bitmap mapBitmaps[][] = new Bitmap[3][3];
-	private Drawable mapDrawable;
-	private BitmapDrawable mapBitmapDrawable;
-	private Bitmap mapBitmap;
+	Bitmap mapBitmaps[][] = new Bitmap[3][3];
+	Drawable mapDrawable;
+	BitmapDrawable mapBitmapDrawable;
+	Bitmap mapBitmap;
 	private int mode = NONE;
 	private boolean matrixCheck = false;
 	private int widthScreen;
@@ -57,6 +57,7 @@ public class OfflineMapView extends ImageView {
 	private double Height = 0.0;
 	
 	// 读取手机SD卡上的离线地图包
+	@SuppressWarnings({ "deprecation", "resource" })
 	private void findMapPics() {
 		// 判断sdcard是否存在于手机上而且没有写保护
 		// Android2.2版本以后sdcard的路径在mnt/sdcard，2.2之前在/sdcard
@@ -183,7 +184,9 @@ public class OfflineMapView extends ImageView {
 	 * @param _speed 小车速度
 	 * @param _height 小车海拔
 	 */
-	public void setLocation(double _x, double _y, int _z, double _direction, double _speed, double _height) {
+	public void setLocation(double _x, 
+			double _y, int _z, double _direction, 
+			double _speed, double _height) {
 		location.X_Degree = _x;
 		location.Y_Degree = _y;
 		location.z = _z;
@@ -197,6 +200,28 @@ public class OfflineMapView extends ImageView {
 		updateView();
 	}
 
+	/**
+	 * @param _x 经度
+	 * @param _y 纬度
+	 * @param _z 缩放
+	 * @param _direction 小车的角度
+	 * @param _speed 小车速度
+	 * @param _height 小车海拔
+	 */
+	public void setLocation(double _x, 
+			double _y, int _z,
+			double _speed, double _height) {
+		location.X_Degree = _x;
+		location.Y_Degree = _y;
+		location.z = _z;
+		zoom_Map = _z;
+		location.DegreeToPicNUM(_x, _y, _z);
+		location.getFileName();
+		Speed = _speed;
+		Height = _height;
+		findMapPics();
+		updateView();
+	}
 	
 	protected void onDraw(Canvas canvas) {
 		canvas.save();
