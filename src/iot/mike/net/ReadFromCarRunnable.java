@@ -52,11 +52,17 @@ public class ReadFromCarRunnable implements Runnable {
 					}
 				}
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
+			
 		}
 	}
 	
+	/**
+	 * 具体的处理数据
+	 * @param jsonorder
+	 * @param type
+	 */
 	private void dealJsonOrder(String jsonorder, int type){
 		switch (type) {
 			case ResultType.Result_GPS:{

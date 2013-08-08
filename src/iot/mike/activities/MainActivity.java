@@ -1,29 +1,40 @@
 package iot.mike.activities;
 
 import h264.com.VView;
+import iot.mike.data.Action_OKCamera;
+import iot.mike.data.Action_Steer;
+import iot.mike.data.Action_USBCamera;
+import iot.mike.data.CameraMode;
 import iot.mike.data.ResultType;
+import iot.mike.data.Result_GPS;
 import iot.mike.data.Result_List;
+import iot.mike.data.Result_OKCamera;
 import iot.mike.data.Result_USBCamera;
 import iot.mike.mapview.OfflineMapView;
 import iot.mike.net.SocketManager;
+import iot.mike.setting.SettingData;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
+import org.json.JSONException;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * 使用键盘和头盔跟踪模块的活动
@@ -32,21 +43,64 @@ import android.widget.TextView;
  */
 public class MainActivity extends Activity {
 	private SocketManager socketManager = SocketManager.getInstance();
+	private Dialog dialog;
+	
+	private final static int OK = 9999;
+	private final static int StartLink = 9998;
+	
+	private Socket videoSocket = null;
+	private OutputStream videoWriter = null;
+	
 	private OfflineMapView mapView;
 	private VView videoView;
+	
+	private Thread initThread = new Thread(new Runnable() {
+		@Override
+		public void run() {
+			try {
+				videoSocket = new Socket("localhost", 11530);
+				videoWriter = videoSocket.getOutputStream();
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				Message message = new Message();
+				message.what = OK;
+				MainctivityHandler.sendMessage(message);
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	});
+	
+	private SensorManager sensorMgr;	// 感应器管理器
+	private Sensor G_sensor, O_sensor;	// 得到方向感应器
+	private float gx, gy, gz, ox;	// 定义各坐标轴上的重力加速度
+	
+	private float degree = 0;
+	private float X_Degree, Y_Degree;	//两个值
+	
+	private volatile static float pre_direction = 0;
+	private volatile static float current_direction = 0;
+	
+	private volatile float Ctrl_X = 0;	
+	private volatile float Ctrl_Y = 0; 
+	private volatile float Ctrl_Z = 0;//判断位
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_keyboard);
-		initViews();
-		
-		socketManager.setKeyBoardActivityHandler(KeyBoardActivityHandler);
-		socketManager.startLink();
-		
-		Intent intent = new Intent(getApplicationContext(), SettingActivity.class);
-		//startActivity(intent);
-		
+		if (SettingData.CtrlMode == SettingData.KeyBoard) {
+			setContentView(R.layout.activity_keyboard);
+			initViews();
+			socketManager.setKeyBoardActivityHandler(MainctivityHandler);
+		}else {
+			setContentView(R.layout.activity_nokeyboard);
+		}
 	}
 
 	@Override
@@ -59,33 +113,101 @@ public class MainActivity extends Activity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		Log.e(keyCode + ":", event.toString());
-		return false;
+		if (SettingData.CtrlMode== SettingData.KeyBoard){
+			if (keyCode == KeyEvent.KEYCODE_NUMPAD_DIVIDE 
+					|| keyCode == KeyEvent.KEYCODE_MENU) {
+				Toast.makeText(getApplicationContext(), 
+						"复位", Toast.LENGTH_SHORT).show();
+				
+				pre_direction = current_direction;
+				
+				Toast.makeText(getApplicationContext(), 
+						pre_direction + ":" + current_direction, 
+						Toast.LENGTH_LONG).show();
+				Action_Steer action_Steer = Action_Steer.getInstance();
+				action_Steer.setA(0);action_Steer.setB(0);
+				Action_USBCamera action_USBCamera = Action_USBCamera.getInstance();
+				action_USBCamera.setMode(CameraMode.on);
+				try {
+					socketManager.sendOrder(action_Steer.getOrder());
+					//socketManager.sendOrder(action_USBCamera.getOrder());
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
+			if (keyCode == KeyEvent.KEYCODE_BACK) {
+				socketManager.startLink();
+				Message message = new Message();
+				message.what = StartLink;
+				MainctivityHandler.sendMessage(message);
+			}
+		}
+		return true;
 	}
 	
-	private Handler KeyBoardActivityHandler = new Handler(){
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event){
+		
+		return super.onKeyUp(keyCode, event);
+	}
+	
+	private Handler MainctivityHandler = new Handler(){
 		@Override
 		public void handleMessage(Message message){
 			switch (message.what) {
 				case ResultType.Result_GPS:{
-					
+					Result_GPS result_GPS = Result_GPS.getInstance();
+					mapView.setLocation(result_GPS.getLongtitude(), 
+							result_GPS.getLatitude(), 
+							18, 
+							result_GPS.getSpeed(), 
+							result_GPS.getHeight());
 					break;
 				}
 				
 				case ResultType.Result_OKCamera:{
-					
+					Result_OKCamera result_OKCamera = Result_OKCamera.getInstance();
+					try {
+						videoWriter.write(result_OKCamera.getFrameData());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 					break;
 				}
 				
 				case ResultType.Result_List:{
-					
+					Result_List result_List = Result_List.getInstance();
+					String[] lists = result_List.getParams();
+					String list_Str = "";
+					for (String list : lists) {
+						list_Str += list + "\n";
+					}
+					Toast.makeText(getApplicationContext(), 
+							list_Str, Toast.LENGTH_LONG).show();
 					break;
 				}
 				
 				case ResultType.Result_USBCamera:{
-					
+					Result_USBCamera result_USBCamera = 
+							Result_USBCamera.getInstance();
+					try {
+						videoWriter.write(result_USBCamera.getFrameData());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 					break;
 				}
 				
+				case StartLink:{
+					createGravitySensor();
+					createMagneticSensor();
+					break;
+				}
+				
+				case OK:{
+					dialog.dismiss();
+					break;
+				}
 				default:{
 					
 					break;
@@ -95,10 +217,132 @@ public class MainActivity extends Activity {
 	};
 	
 	private void initViews(){
+		dialog = onCreateDialog(2);
+		dialog.show();
+		
 		videoView = (VView)findViewById(R.id.video_VV);
 		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
-		mapView.setLocation(120.64248919487, 31.30230587142129, 18, 0, 20, 20);
+		try {
+			videoView.init();
+			videoView.playVideo();
+			initThread.start();
+		} catch (IOException e) {
+			e.printStackTrace();
+			Toast.makeText(getApplicationContext(), 
+					"出现故障", Toast.LENGTH_LONG).show();
+		}
 	}
+	
+	private void createGravitySensor(){
+		 // 得到当前手机传感器管理对象
+       sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
+       // 加速重力感应对象
+       G_sensor = sensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+       // 实例化一个监听器
+       SensorEventListener lsn = new SensorEventListener() {
+           // 实现接口的方法
+           public void onSensorChanged(SensorEvent e) {
+               // 得到各轴上的重力加速度
+               gx = e.values[SensorManager.DATA_X];
+               gy = e.values[SensorManager.DATA_Y];
+               gz = e.values[SensorManager.DATA_Z];
+               dealDegree();
+           }
+           public void onAccuracyChanged(Sensor s, int accuracy) {}
+       };
+       // 注册listener，第三个参数是检测的精确度
+       sensorMgr.registerListener(lsn, G_sensor, 
+    		   SensorManager.SENSOR_DELAY_GAME);
+	}
+	
+	private void createMagneticSensor(){
+		// 得到当前手机传感器管理对象
+       sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
+       // 加速方向感应对象
+       O_sensor = sensorMgr.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+       // 实例化一个监听器
+       SensorEventListener lsn = new SensorEventListener() {
+           // 实现接口的方法
+           public void onSensorChanged(SensorEvent event) {
+	       		//右正左负
+	       		if (event.sensor.getType() == Sensor.TYPE_ORIENTATION){
+	       			ox = event.values[SensorManager.DATA_X];
+	       			current_direction = ox;
+	       			if(pre_direction < 180){	//这个初始角的位置小于180度
+	       				if(ox > (pre_direction + 180) || ox < pre_direction){	//现在这个角度在pre_direction的左侧
+	       					if(ox >= pre_direction) //这个角度是没有过0度
+	       						degree = -(360 - ox + pre_direction);
+	       					else degree = -(pre_direction - ox); //是过了0度，在pre_direction和0之间
+	       				}else {	//在pre_direction的右侧
+	       					degree = ox - pre_direction;
+	       				}
+	       			}else {	//这个初始角的位置大于180度
+	       				if(ox > pre_direction - 180 && ox < pre_direction){	//现在这个角度在pre_direction的左侧
+	        					degree = -(pre_direction - ox);
+	       				}else {	//在pre_direction的右侧
+	       					if (ox >= pre_direction) //这个角度在pre_direction和0之间
+	        						degree = ox - pre_direction;
+	       					else degree = 360 + ox - pre_direction;	//这个角过了0度
+	       				}
+	       			}
+	       			Ctrl_X = degree;
+	       		}
+	       	}
+           public void onAccuracyChanged(Sensor s, int accuracy) {}
+       };
+       // 注册listener，第三个参数是检测的精确度
+       sensorMgr.registerListener(lsn, O_sensor, 
+    		   SensorManager.SENSOR_DELAY_GAME);
+	}
+	
+	private void dealDegree(){
+    	if(!(gx > 5)){
+    		//Log.e("手机翻过", "不启动程序");
+    	}else {//只有俯仰60度，左右60度
+			Y_Degree = 90 - 10 * gz;
+			if (Y_Degree > 150) 
+				Y_Degree = 150;
+			if (Y_Degree < 30) 
+				Y_Degree = 30;
+			X_Degree = 90 + 10 * gy;
+			if (X_Degree > 150)
+				X_Degree = 150;
+			if (X_Degree < 30)
+				X_Degree = 30;
+			
+            Ctrl_Y = Y_Degree;
+            Ctrl_Z = X_Degree;
+            
+            if (Ctrl_Z < 105 && Ctrl_Z > 75) {
+				Log.e("D", "X:" + Ctrl_X + " Y:" + Ctrl_Y);
+				Action_Steer action_Steer = Action_Steer.getInstance();
+				action_Steer.setA((int)Ctrl_X);
+				action_Steer.setB((int)Ctrl_Y - 90);
+				try {
+					socketManager.sendOrder(action_Steer.getOrder());
+					
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}else {
+				Log.e("W", "头部请不要歪斜！");
+			}
+		}
+    }
+
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            default: {         //有标题栏的进度对话框
+                ProgressDialog dialog = new ProgressDialog(this);
+                dialog.setTitle("正在初始化.....");
+                dialog.setMessage("Please wait while loading...");
+                dialog.setIndeterminate(true);
+                dialog.setCancelable(true);
+                return dialog;
+            }
+        }
+    }
 }
 
 

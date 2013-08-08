@@ -2,6 +2,7 @@ package h264.com;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -21,7 +22,10 @@ public class VView extends View  implements Runnable{
 	private Paint   mPaint = null;   
 	private Bitmap  mSCBitmap = null;   
     private Thread playThread = null;
-    private Socket clientSocket;
+    private ServerSocket serverSocket = null;
+    private Socket clientSocket = null;
+    
+    
     private int width = 640;  
     private int height = 480;
     private byte [] mPixel = new byte[width*height*2];
@@ -40,7 +44,7 @@ public class VView extends View  implements Runnable{
         System.loadLibrary("H264Android");
     }
     
-    public VView(Context context) {
+    public VView(Context context)  {
         super(context);
         setFocusable(true);
        	int i = mPixel.length;
@@ -48,7 +52,7 @@ public class VView extends View  implements Runnable{
         	mPixel[i]=(byte)0x00;
         }
     }
-    public VView(Context  _context, AttributeSet _attriAttributeSet){
+    public VView(Context  _context, AttributeSet _attriAttributeSet) {
     	super(_context, _attriAttributeSet);
     	setFocusable(true);
        	int i = mPixel.length;
@@ -57,33 +61,25 @@ public class VView extends View  implements Runnable{
         }
     }
     
-    public boolean PlayVideo(){
+    public void init() throws IOException{
+    	serverSocket = new ServerSocket(11530);
+    	Log.d("Video", "视频服务器搭建完成");
+    }
+    
+    public void playVideo(){
     	stopPlaty();
     	mPixel = new byte[width*height*2];
     	buffer = ByteBuffer.wrap( mPixel );
     	VideoBit = Bitmap.createBitmap(width, height, Config.RGB_565);           
     	playThread = new Thread(this);
-    	try {
-			clientSocket = 
-					new Socket("192.168.0.232", 7891);
-			inputStream = 
-					new DataInputStream(clientSocket.getInputStream());
-			playThread.start();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
-    	return true;
+    	playThread.start();
     }
         
     public void stopPlaty() {
     	if (playThread != null) {
     		try{
     			playThread.interrupt();
-    			clientSocket.close();
+    			serverSocket.close();
 	    		playThread = null;
     		}catch (Exception e) {
     			e.printStackTrace();
@@ -133,9 +129,15 @@ public class VView extends View  implements Runnable{
     	byte [] NalBuf = new byte[900000]; // 40k
     	byte [] SockBuf = new byte[2048000];
     	
-    	Log.e("open", "open");
     	InitDecoder(width, height); 
- 	
+		try {
+			clientSocket = serverSocket.accept();
+			inputStream = 
+					new DataInputStream(clientSocket.getInputStream());
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			return;
+		}
 		while (!Thread.currentThread().isInterrupted())  {   
 		    try  {   
 				bytesRead = inputStream.read(SockBuf, 0, 2048000);

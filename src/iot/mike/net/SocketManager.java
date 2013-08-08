@@ -1,28 +1,31 @@
 package iot.mike.net;
 
+import iot.mike.data.Action_Steer;
 import iot.mike.setting.SettingData;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.concurrent.ThreadPoolExecutor;
+
+import org.json.JSONException;
 
 import android.os.Handler;
 import android.util.Log;
 
 public class SocketManager {
 	private SocketManager(){}
+	
 	private Handler MainActivityHandler = null;
 	private Socket MainSocket = null;
 	private BufferedReader reader = null;
 	private BufferedWriter writer = null;
 	private Thread readFromCarThread = null;
+	
+	private Socket videoSocket = null;
 	
 	private static class SocketManagerHolder{
 		public static SocketManager socketManager = new SocketManager();
@@ -56,6 +59,8 @@ public class SocketManager {
 				try {
 					MainSocket = new Socket(SettingData.CarIP, 
 							SettingData.CarMainPort);
+					
+					videoSocket = new Socket("localhost", 11530);
 					Log.d("建立连接", "成功!");
 					reader = new BufferedReader(
 							new InputStreamReader(
@@ -68,6 +73,13 @@ public class SocketManager {
 									MainActivityHandler));
 					readFromCarThread.start();
 					NetUtil.sendList(writer);
+					Action_Steer action_Steer = Action_Steer.getInstance();
+					action_Steer.setA(0);action_Steer.setB(0);
+					try {
+						sendOrder(action_Steer.getOrder());
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
 					try {MainSocket.close();} 
