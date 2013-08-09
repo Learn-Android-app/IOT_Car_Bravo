@@ -1,10 +1,10 @@
-package iot.mike.net;
+package iot.mike.iotcarbravo.net;
 
-import iot.mike.data.ResultType;
-import iot.mike.data.Result_GPS;
-import iot.mike.data.Result_List;
-import iot.mike.data.Result_OKCamera;
-import iot.mike.data.Result_USBCamera;
+import iot.mike.iotcarbravo.data.ResultType;
+import iot.mike.iotcarbravo.data.Result_GPS;
+import iot.mike.iotcarbravo.data.Result_List;
+import iot.mike.iotcarbravo.data.Result_OKCamera;
+import iot.mike.iotcarbravo.data.Result_USBCamera;
 
 import java.io.BufferedReader;
 import java.io.IOException;

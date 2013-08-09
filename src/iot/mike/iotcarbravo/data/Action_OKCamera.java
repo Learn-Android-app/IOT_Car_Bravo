@@ -1,17 +1,17 @@
-package iot.mike.data;
+package iot.mike.iotcarbravo.data;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Action_USBCamera {
-	private Action_USBCamera(){}
+public class Action_OKCamera {
+	private Action_OKCamera(){}
 	
-	private static class Action_USBCameraHolder{
-		public static Action_USBCamera action_OKCamera = new Action_USBCamera();
+	private static class Action_OKCameraHolder{
+		public static Action_OKCamera action_OKCamera = new Action_OKCamera();
 	}
 	
-	public static Action_USBCamera getInstance(){
-		return Action_USBCameraHolder.action_OKCamera;
+	public static Action_OKCamera getInstance(){
+		return Action_OKCameraHolder.action_OKCamera;
 	}
 	
 	private static class Param{
@@ -45,6 +45,6 @@ public class Action_USBCamera {
 		return okCamera.toString();
 	}
 	
-	private String action = "usbcamera";
+	private String action = "okcamera";
 	private Param param = new Param();
 }	

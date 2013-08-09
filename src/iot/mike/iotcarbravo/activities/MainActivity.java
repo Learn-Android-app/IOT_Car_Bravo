@@ -1,23 +1,19 @@
-package iot.mike.activities;
+package iot.mike.iotcarbravo.activities;
 
 import h264.com.VView;
-import iot.mike.data.Action_Emotor;
-import iot.mike.data.Action_Steer;
-import iot.mike.data.Action_USBCamera;
-import iot.mike.data.CameraMode;
-import iot.mike.data.ResultType;
-import iot.mike.data.Result_GPS;
-import iot.mike.data.Result_List;
-import iot.mike.data.Result_OKCamera;
-import iot.mike.data.Result_USBCamera;
-import iot.mike.mapview.OfflineMapView;
-import iot.mike.net.SocketManager;
-import iot.mike.setting.SettingData;
+import iot.mike.iotcarbravo.data.Action_Emotor;
+import iot.mike.iotcarbravo.data.Action_Steer;
+import iot.mike.iotcarbravo.data.Action_USBCamera;
+import iot.mike.iotcarbravo.data.CameraMode;
+import iot.mike.iotcarbravo.data.ResultType;
+import iot.mike.iotcarbravo.data.Result_GPS;
+import iot.mike.iotcarbravo.data.Result_List;
+import iot.mike.iotcarbravo.data.Result_OKCamera;
+import iot.mike.iotcarbravo.data.Result_USBCamera;
+import iot.mike.iotcarbravo.mapview.OfflineMapView;
+import iot.mike.iotcarbravo.net.SocketManager;
+import iot.mike.iotcarbravo.setting.SettingData;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -36,6 +32,11 @@ import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,7 +56,21 @@ public class MainActivity extends Activity {
 	private OfflineMapView mapView;
 	private static VView videoView;
 	
-	private Thread initThread = new Thread(new Runnable() {
+	private Thread initKeyBoardThread = new Thread(new Runnable() {
+		@Override
+		public void run() {
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			Message message = new Message();
+			message.what = OK;
+			MainctivityHandler_KeyBoard.sendMessage(message);
+		}
+	});
+	
+	private Thread initNOKeyBoardThread = new Thread(new Runnable() {
 		@Override
 		public void run() {
 			try {
@@ -83,6 +98,15 @@ public class MainActivity extends Activity {
 	private volatile float Ctrl_Y = 0; 
 	private volatile float Ctrl_Z = 0;//判断位
 	
+	
+	private Button SpeedUP_BTN;
+	private Button SpeedAVG_BTN;
+	private Button Stop_BTN;
+	
+	private Button CameraUP_BTN;
+	private Button CameraDOWN_BTN;
+	private Button CameraLEFT_BTN;
+	private Button CameraRIGHT_BTN;
 	
 	private Timer addSpeedTimer = null;
 	private class addSpeedTimerTask extends TimerTask{
@@ -159,10 +183,11 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		if (SettingData.CtrlMode == SettingData.KeyBoard) {
 			setContentView(R.layout.activity_keyboard);
-			initViews();
+			initKeyBoardViews();
 			socketManager.setKeyBoardActivityHandler(MainctivityHandler_KeyBoard);
 		}else {
 			setContentView(R.layout.activity_nokeyboard);
+			initNOKeyBoardViews();
 		}
 	}
 
@@ -359,6 +384,7 @@ public class MainActivity extends Activity {
 				case OK:{
 					if (dialog != null) {
 						dialog.dismiss();
+						dialog.cancel();
 						dialog = null;
 					}
 					videoView.playVideo();
@@ -372,13 +398,52 @@ public class MainActivity extends Activity {
 		}
 	};
 	
-	private void initViews(){
+	private void initKeyBoardViews(){
+		dialog = onCreateDialog(2);
+		dialog.show();
+		initKeyBoardThread.start();
+		videoView = (VView)findViewById(R.id.video_VV);
+		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
+	}
+	
+	private void initNOKeyBoardViews(){
 		dialog = null;
 		dialog = onCreateDialog(2);
 		dialog.show();
-		initThread.start();
-		videoView = (VView)findViewById(R.id.video_VV);
-		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
+		initNOKeyBoardThread.start();
+		videoView = (VView)findViewById(R.id.videoView);
+		mapView = (OfflineMapView)findViewById(R.id.mapView);
+		SpeedAVG_BTN = (Button)findViewById(R.id.speedAVG_BTN);
+		SpeedAVG_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
+				Action_Emotor.getInstance(), 
+				Action_Steer.getInstance()));
+		SpeedUP_BTN = (Button)findViewById(R.id.speedUP_BTN);
+		SpeedUP_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
+				Action_Emotor.getInstance(), 
+				Action_Steer.getInstance()));
+		Stop_BTN = (Button)findViewById(R.id.stop_BTN);
+		Stop_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
+				Action_Emotor.getInstance(), 
+				Action_Steer.getInstance()));
+		
+		CameraDOWN_BTN = (Button)findViewById(R.id.camera_DOWN_BTN);
+		CameraDOWN_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
+				Action_Emotor.getInstance(),
+				Action_Steer.getInstance()));
+		
+		CameraLEFT_BTN = (Button)findViewById(R.id.camera_LEFT_BTN);
+		CameraLEFT_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
+				Action_Emotor.getInstance(),
+				Action_Steer.getInstance()));
+		CameraRIGHT_BTN = (Button)findViewById(R.id.camera_RIGHT_BTN);
+		CameraRIGHT_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
+				Action_Emotor.getInstance(), 
+				Action_Steer.getInstance()));
+		
+		CameraUP_BTN = (Button)findViewById(R.id.camera_UP_BTN);
+		CameraUP_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
+				Action_Emotor.getInstance(), 
+				Action_Steer.getInstance()));
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -492,6 +557,76 @@ public class MainActivity extends Activity {
                 return dialog;
             }
         }
+    }
+    
+    private class MyOnTouchListener implements OnTouchListener{
+    	private SocketManager socketManager;
+    	private Action_Emotor action_Emotor;
+    	private Action_Steer action_Steer;
+    	
+    	public MyOnTouchListener(SocketManager socketManager,
+    			Action_Emotor action_Emotor,
+    			Action_Steer action_Steer){
+    		this.socketManager = socketManager;
+    		this.action_Emotor = action_Emotor;
+    		this.action_Steer = action_Steer;
+    	}
+    	
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			if (event.getAction() == KeyEvent.ACTION_DOWN) {
+				switch (v.getId()) {
+					case R.id.speedAVG_BTN:{
+						break;
+					}
+					case R.id.speedUP_BTN:{
+						break;
+					}
+					case R.id.stop_BTN:{
+						break;
+					}
+					case R.id.camera_DOWN_BTN:{
+						break;
+					}
+					case R.id.camera_LEFT_BTN:{
+						break;
+					}
+					case R.id.camera_RIGHT_BTN:{
+						break;
+					}
+					case R.id.camera_UP_BTN:{
+						break;
+					}
+					
+				}
+			}else if (event.getAction() == KeyEvent.ACTION_UP) {
+				switch (v.getId()) {
+					case R.id.speedAVG_BTN:{
+						break;
+					}
+					case R.id.speedUP_BTN:{
+						break;
+					}
+					case R.id.stop_BTN:{
+						break;
+					}
+					case R.id.camera_DOWN_BTN:{
+						break;
+					}
+					case R.id.camera_LEFT_BTN:{
+						break;
+					}
+					case R.id.camera_RIGHT_BTN:{
+						break;
+					}
+					case R.id.camera_UP_BTN:{
+						break;
+					}
+					
+				}
+			}
+			return false;
+		}
     }
 }
 

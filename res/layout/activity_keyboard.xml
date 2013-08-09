@@ -20,7 +20,7 @@
         android:layout_marginLeft="10dp"
         android:layout_toRightOf="@+id/offlineMap_MAP" />
 
-    <iot.mike.mapview.OfflineMapView
+    <iot.mike.iotcarbravo.mapview.OfflineMapView
         android:id="@+id/offlineMap_MAP"
         android:layout_width="180dp"
         android:layout_height="180dp"

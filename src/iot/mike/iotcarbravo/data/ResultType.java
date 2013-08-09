@@ -1,4 +1,4 @@
-package iot.mike.data;
+package iot.mike.iotcarbravo.data;
 
 public class ResultType {
 	public static final int Result_OKCamera = 1;

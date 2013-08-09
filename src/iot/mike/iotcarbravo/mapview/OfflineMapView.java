@@ -1,6 +1,6 @@
-package iot.mike.mapview;
+package iot.mike.iotcarbravo.mapview;
 
-import iot.mike.activities.R;
+import iot.mike.iotcarbravo.activities.R;
 
 import java.io.File;
 import java.io.RandomAccessFile;

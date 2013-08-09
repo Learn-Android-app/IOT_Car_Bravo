@@ -1,6 +1,6 @@
-package iot.mike.activities;
+package iot.mike.iotcarbravo.activities;
 
-import iot.mike.setting.SettingData;
+import iot.mike.iotcarbravo.setting.SettingData;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
@@ -35,6 +35,7 @@ public class SettingActivity extends PreferenceActivity{
 					getSharedPreferences("iot.mike.activities_preferences",
 							MODE_WORLD_WRITEABLE);
 			SettingData.CarIP = spc.getString("CarIP", "192.168.135.116");
+			SettingData.CarMainPort = spc.getInt("CarMainPort", 7890);
 	    	Log.e("读取的IP为:", "IP:" + SettingData.CarIP);
 		}
 }

@@ -1,7 +1,7 @@
-package iot.mike.net;
+package iot.mike.iotcarbravo.net;
 
-import iot.mike.data.Action_List;
-import iot.mike.data.ResultType;
+import iot.mike.iotcarbravo.data.Action_List;
+import iot.mike.iotcarbravo.data.ResultType;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

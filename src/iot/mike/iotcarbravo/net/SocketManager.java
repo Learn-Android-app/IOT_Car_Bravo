@@ -1,6 +1,6 @@
-package iot.mike.net;
+package iot.mike.iotcarbravo.net;
 
-import iot.mike.setting.SettingData;
+import iot.mike.iotcarbravo.setting.SettingData;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

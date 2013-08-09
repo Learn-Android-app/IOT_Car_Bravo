@@ -1,4 +1,4 @@
-package iot.mike.setting;
+package iot.mike.iotcarbravo.setting;
 
 
 public class SettingData {

@@ -1,4 +1,4 @@
-package iot.mike.data;
+package iot.mike.iotcarbravo.data;
 
 public class ActionType {
 	public static final int Action_Steer = 1;
