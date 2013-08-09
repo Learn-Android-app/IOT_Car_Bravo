@@ -1,6 +1,5 @@
 package iot.mike.net;
 
-import iot.mike.data.Action_Steer;
 import iot.mike.setting.SettingData;
 
 import java.io.BufferedReader;
@@ -8,16 +7,22 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-
-import org.json.JSONException;
 
 import android.os.Handler;
 import android.util.Log;
 
 public class SocketManager {
-	private SocketManager(){}
+	private SocketManager(){
+		try {
+			videoSocket = new ServerSocket(11530);
+			Log.d("Socket Video", "Established");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	private Handler MainActivityHandler = null;
 	private Socket MainSocket = null;
@@ -25,7 +30,8 @@ public class SocketManager {
 	private BufferedWriter writer = null;
 	private Thread readFromCarThread = null;
 	
-	private Socket videoSocket = null;
+	private ServerSocket videoSocket = null;
+	private volatile Socket vviewSocket = null;
 	
 	private static class SocketManagerHolder{
 		public static SocketManager socketManager = new SocketManager();
@@ -33,6 +39,26 @@ public class SocketManager {
 	
 	public static SocketManager getInstance(){
 		return SocketManagerHolder.socketManager;
+	}
+	
+	/**
+	 * 给视频码流
+	 * @param framedata 视频数据
+	 * @return
+	 */
+	public boolean sendVideo(byte[] framedata) {
+		if (vviewSocket != null) {
+			try {
+				vviewSocket.getOutputStream().write(framedata);
+				Log.d("VideoSocket", "Send OK");
+				return true;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+		Log.d("VideoSocket", "Send Failed");
+		return false;
 	}
 	
 	/**
@@ -60,8 +86,8 @@ public class SocketManager {
 					MainSocket = new Socket(SettingData.CarIP, 
 							SettingData.CarMainPort);
 					
-					videoSocket = new Socket("localhost", 11530);
 					Log.d("建立连接", "成功!");
+					
 					reader = new BufferedReader(
 							new InputStreamReader(
 									MainSocket.getInputStream()));
@@ -73,12 +99,9 @@ public class SocketManager {
 									MainActivityHandler));
 					readFromCarThread.start();
 					NetUtil.sendList(writer);
-					Action_Steer action_Steer = Action_Steer.getInstance();
-					action_Steer.setA(0);action_Steer.setB(0);
-					try {
-						sendOrder(action_Steer.getOrder());
-					} catch (JSONException e) {
-						e.printStackTrace();
+					while (true) {
+						vviewSocket = videoSocket.accept();
+						Log.d("VideoSocket", "New Comer");
 					}
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
@@ -121,11 +144,15 @@ public class SocketManager {
 	 */
 	public boolean sendOrder(String jsonorder){
 		try {
-			synchronized (writer) {
-				writer.write(jsonorder + "\n");
-				writer.flush();
+			if (writer != null) {
+				synchronized (writer) {
+					writer.write(jsonorder + "\n");
+					writer.flush();
+					return true;
+				}
+			}else {
+				return false;
 			}
-			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;

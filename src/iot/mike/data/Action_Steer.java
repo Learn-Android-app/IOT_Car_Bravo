@@ -59,6 +59,11 @@ public class Action_Steer {
 		return action.toString();
 	}
 	
+	public void reset(){
+		param.setA(0);
+		param.setB(0);
+	}
+	
 	public synchronized void setA(int a){
 		param.setA(a);;
 	}

@@ -1,7 +1,7 @@
 package iot.mike.activities;
 
 import h264.com.VView;
-import iot.mike.data.Action_OKCamera;
+import iot.mike.data.Action_Emotor;
 import iot.mike.data.Action_Steer;
 import iot.mike.data.Action_USBCamera;
 import iot.mike.data.CameraMode;
@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.json.JSONException;
 
@@ -34,6 +36,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -43,42 +46,32 @@ import android.widget.Toast;
  */
 public class MainActivity extends Activity {
 	private SocketManager socketManager = SocketManager.getInstance();
-	private Dialog dialog;
+	
+	private Dialog dialog;	
 	
 	private final static int OK = 9999;
 	private final static int StartLink = 9998;
 	
-	private Socket videoSocket = null;
-	private OutputStream videoWriter = null;
-	
 	private OfflineMapView mapView;
-	private VView videoView;
+	private static VView videoView;
 	
 	private Thread initThread = new Thread(new Runnable() {
 		@Override
 		public void run() {
 			try {
-				videoSocket = new Socket("localhost", 11530);
-				videoWriter = videoSocket.getOutputStream();
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				Message message = new Message();
-				message.what = OK;
-				MainctivityHandler.sendMessage(message);
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			Message message = new Message();
+			message.what = OK;
+			MainctivityHandler_KeyBoard.sendMessage(message);
 		}
 	});
 	
 	private SensorManager sensorMgr;	// 感应器管理器
 	private Sensor G_sensor, O_sensor;	// 得到方向感应器
-	private float gx, gy, gz, ox;	// 定义各坐标轴上的重力加速度
+	private float gx, gy, gz, ox;		// 定义各坐标轴上的重力加速度
 	
 	private float degree = 0;
 	private float X_Degree, Y_Degree;	//两个值
@@ -91,13 +84,83 @@ public class MainActivity extends Activity {
 	private volatile float Ctrl_Z = 0;//判断位
 	
 	
+	private Timer addSpeedTimer = null;
+	private class addSpeedTimerTask extends TimerTask{
+		@Override
+		public void run() {
+			Action_Emotor.getInstance().addSpeed();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	private Timer addTurnTimer = null;
+	private class addTurnTimerTask extends TimerTask {
+		@Override
+		public void run() {
+			Action_Emotor.getInstance().addTurn();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	private Timer reduceSpeedTimer = null;
+	private class reduceSpeedTimerTask extends TimerTask{
+		@Override
+		public void run() {
+			Action_Emotor.getInstance().reduceSpeed();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	private Timer reduceTurnTimer = null;
+	private class reduceTurnTimerTask extends TimerTask{
+		@Override
+		public void run() {
+			Action_Emotor.getInstance().reduceTurn();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	
+	}
+	
+	@Override
+	public void onDestroy() {
+		try {
+			Action_Emotor.getInstance().reset();
+			Action_Steer.getInstance().reset();
+			socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			socketManager.sendOrder(Action_Steer.getInstance().getOrder());
+			super.onDestroy();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		if (SettingData.CtrlMode == SettingData.KeyBoard) {
 			setContentView(R.layout.activity_keyboard);
 			initViews();
-			socketManager.setKeyBoardActivityHandler(MainctivityHandler);
+			socketManager.setKeyBoardActivityHandler(MainctivityHandler_KeyBoard);
 		}else {
 			setContentView(R.layout.activity_nokeyboard);
 		}
@@ -113,6 +176,60 @@ public class MainActivity extends Activity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		Log.e(keyCode + ":", event.toString());
+		TextView textView = (TextView)findViewById(R.id.textView1);
+		try {
+			textView.setText(event.toString() + "\n" +
+					Action_Emotor.getInstance().getOrder());
+		} catch (JSONException e1) {
+			e1.printStackTrace();
+		}
+		//中间5键,复位
+		if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_5) {
+			Action_Emotor.getInstance().reset();
+			Action_Steer.getInstance().reset();
+		}
+		//上键,加速
+		if (keyCode == KeyEvent.KEYCODE_DPAD_UP
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_8) {
+			if (addSpeedTimer != null) {
+				addSpeedTimer.cancel();
+				addSpeedTimer = null;
+			}
+			addSpeedTimer = new Timer();
+			addSpeedTimer.schedule(new addSpeedTimerTask(), 0, 500);
+		}
+		//下键,减速
+		if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_2) {
+			if (reduceSpeedTimer != null) {
+				reduceSpeedTimer.cancel();
+				reduceSpeedTimer = null;
+			}
+			reduceSpeedTimer = new Timer();
+			reduceSpeedTimer.schedule(new reduceSpeedTimerTask(), 0, 500);
+		}
+		//左键,左拐
+		if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_4) {
+			if (reduceTurnTimer != null) {
+				reduceTurnTimer.cancel();
+				reduceTurnTimer = null;
+			}
+			reduceTurnTimer = new Timer();
+			reduceTurnTimer.schedule(new reduceTurnTimerTask(), 0, 500);
+		}
+		//右键,右拐
+		if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_6) {
+			if (addTurnTimer != null) {
+				addTurnTimer.cancel();
+				addTurnTimer = null;
+			}
+			addTurnTimer = new Timer();
+			addTurnTimer.schedule(new addTurnTimerTask(), 0, 500);
+		}
+		
 		if (SettingData.CtrlMode== SettingData.KeyBoard){
 			if (keyCode == KeyEvent.KEYCODE_NUMPAD_DIVIDE 
 					|| keyCode == KeyEvent.KEYCODE_MENU) {
@@ -129,8 +246,8 @@ public class MainActivity extends Activity {
 				Action_USBCamera action_USBCamera = Action_USBCamera.getInstance();
 				action_USBCamera.setMode(CameraMode.on);
 				try {
+					socketManager.sendOrder(action_USBCamera.getOrder());
 					socketManager.sendOrder(action_Steer.getOrder());
-					//socketManager.sendOrder(action_USBCamera.getOrder());
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
@@ -139,7 +256,7 @@ public class MainActivity extends Activity {
 				socketManager.startLink();
 				Message message = new Message();
 				message.what = StartLink;
-				MainctivityHandler.sendMessage(message);
+				MainctivityHandler_KeyBoard.sendMessage(message);
 			}
 		}
 		return true;
@@ -147,11 +264,52 @@ public class MainActivity extends Activity {
 	
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event){
-		
-		return super.onKeyUp(keyCode, event);
-	}
+		//中间5键,复位
+		if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_5) {
+			Action_Emotor.getInstance().reset();
+			Action_Steer.getInstance().reset();
+		}
+		//上键,加速
+		if (keyCode == KeyEvent.KEYCODE_DPAD_UP
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_8) {
+			if (addSpeedTimer != null) {
+				addSpeedTimer.cancel();
+				addSpeedTimer = null;
+			}
+			Action_Emotor.getInstance().reset();
+		}
+		//下键,减速
+		if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_2) {
+			if (reduceSpeedTimer != null) {
+				reduceSpeedTimer.cancel();
+				reduceSpeedTimer = null;
+			}
+			Action_Emotor.getInstance().reset();
+		}
+		//左键,左拐
+		if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_4) {
+			if (reduceTurnTimer != null) {
+				reduceTurnTimer.cancel();
+				reduceTurnTimer = null;
+			}
+			Action_Emotor.getInstance().reset();
+		}
+		//右键,右拐
+		if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+				|| keyCode == KeyEvent.KEYCODE_NUMPAD_6) {
+			if (addTurnTimer != null) {
+				addTurnTimer.cancel();
+				addTurnTimer = null;
+			}
+			Action_Emotor.getInstance().reset();
+		}
+		return false;
+	}	
 	
-	private Handler MainctivityHandler = new Handler(){
+	private Handler MainctivityHandler_KeyBoard = new Handler(){
 		@Override
 		public void handleMessage(Message message){
 			switch (message.what) {
@@ -166,17 +324,15 @@ public class MainActivity extends Activity {
 				}
 				
 				case ResultType.Result_OKCamera:{
-					Result_OKCamera result_OKCamera = Result_OKCamera.getInstance();
-					try {
-						videoWriter.write(result_OKCamera.getFrameData());
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					Result_OKCamera result_OKCamera = 
+							Result_OKCamera.getInstance();
+					socketManager.sendVideo(result_OKCamera.getFrameData());
 					break;
 				}
 				
 				case ResultType.Result_List:{
-					Result_List result_List = Result_List.getInstance();
+					Result_List result_List = 
+							Result_List.getInstance();
 					String[] lists = result_List.getParams();
 					String list_Str = "";
 					for (String list : lists) {
@@ -190,11 +346,7 @@ public class MainActivity extends Activity {
 				case ResultType.Result_USBCamera:{
 					Result_USBCamera result_USBCamera = 
 							Result_USBCamera.getInstance();
-					try {
-						videoWriter.write(result_USBCamera.getFrameData());
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					socketManager.sendVideo(result_USBCamera.getFrameData());
 					break;
 				}
 				
@@ -205,7 +357,11 @@ public class MainActivity extends Activity {
 				}
 				
 				case OK:{
-					dialog.dismiss();
+					if (dialog != null) {
+						dialog.dismiss();
+						dialog = null;
+					}
+					videoView.playVideo();
 					break;
 				}
 				default:{
@@ -217,22 +373,15 @@ public class MainActivity extends Activity {
 	};
 	
 	private void initViews(){
+		dialog = null;
 		dialog = onCreateDialog(2);
 		dialog.show();
-		
+		initThread.start();
 		videoView = (VView)findViewById(R.id.video_VV);
 		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
-		try {
-			videoView.init();
-			videoView.playVideo();
-			initThread.start();
-		} catch (IOException e) {
-			e.printStackTrace();
-			Toast.makeText(getApplicationContext(), 
-					"出现故障", Toast.LENGTH_LONG).show();
-		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void createGravitySensor(){
 		 // 得到当前手机传感器管理对象
        sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -241,7 +390,7 @@ public class MainActivity extends Activity {
        // 实例化一个监听器
        SensorEventListener lsn = new SensorEventListener() {
            // 实现接口的方法
-           public void onSensorChanged(SensorEvent e) {
+		public void onSensorChanged(SensorEvent e) {
                // 得到各轴上的重力加速度
                gx = e.values[SensorManager.DATA_X];
                gy = e.values[SensorManager.DATA_Y];
@@ -252,9 +401,9 @@ public class MainActivity extends Activity {
        };
        // 注册listener，第三个参数是检测的精确度
        sensorMgr.registerListener(lsn, G_sensor, 
-    		   SensorManager.SENSOR_DELAY_GAME);
+    		   SensorManager.SENSOR_DELAY_UI);
 	}
-	
+	@SuppressWarnings("deprecation")
 	private void createMagneticSensor(){
 		// 得到当前手机传感器管理对象
        sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -292,7 +441,7 @@ public class MainActivity extends Activity {
        };
        // 注册listener，第三个参数是检测的精确度
        sensorMgr.registerListener(lsn, O_sensor, 
-    		   SensorManager.SENSOR_DELAY_GAME);
+    		   SensorManager.SENSOR_DELAY_UI);
 	}
 	
 	private void dealDegree(){
@@ -314,7 +463,7 @@ public class MainActivity extends Activity {
             Ctrl_Z = X_Degree;
             
             if (Ctrl_Z < 105 && Ctrl_Z > 75) {
-				Log.e("D", "X:" + Ctrl_X + " Y:" + Ctrl_Y);
+				//Log.e("D", "X:" + Ctrl_X + " Y:" + Ctrl_Y);
 				Action_Steer action_Steer = Action_Steer.getInstance();
 				action_Steer.setA((int)Ctrl_X);
 				action_Steer.setB((int)Ctrl_Y - 90);
@@ -325,7 +474,8 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 				}
 			}else {
-				Log.e("W", "头部请不要歪斜！");
+				Toast.makeText(getApplicationContext(), 
+						"不要倾斜头部", Toast.LENGTH_LONG).show();
 			}
 		}
     }

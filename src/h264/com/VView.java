@@ -2,9 +2,7 @@ package h264.com;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
 import android.content.Context;
@@ -22,8 +20,7 @@ public class VView extends View  implements Runnable{
 	private Paint   mPaint = null;   
 	private Bitmap  mSCBitmap = null;   
     private Thread playThread = null;
-    private ServerSocket serverSocket = null;
-    private Socket clientSocket = null;
+    private Socket videoSocket = null;
     
     
     private int width = 640;  
@@ -52,8 +49,8 @@ public class VView extends View  implements Runnable{
         	mPixel[i]=(byte)0x00;
         }
     }
-    public VView(Context  _context, AttributeSet _attriAttributeSet) {
-    	super(_context, _attriAttributeSet);
+    public VView(Context  context, AttributeSet attriAttributeSet) {
+    	super(context, attriAttributeSet);
     	setFocusable(true);
        	int i = mPixel.length;
         for(i=0; i<mPixel.length; i++){
@@ -61,9 +58,10 @@ public class VView extends View  implements Runnable{
         }
     }
     
-    public void init() throws IOException{
-    	serverSocket = new ServerSocket(11530);
-    	Log.d("Video", "视频服务器搭建完成");
+    public void closeServer() throws IOException{
+    	if (videoSocket != null) {
+    		videoSocket.close();
+		}
     }
     
     public void playVideo(){
@@ -79,7 +77,7 @@ public class VView extends View  implements Runnable{
     	if (playThread != null) {
     		try{
     			playThread.interrupt();
-    			serverSocket.close();
+    			videoSocket.close();
 	    		playThread = null;
     		}catch (Exception e) {
     			e.printStackTrace();
@@ -131,22 +129,24 @@ public class VView extends View  implements Runnable{
     	
     	InitDecoder(width, height); 
 		try {
-			clientSocket = serverSocket.accept();
+			videoSocket = new Socket("localhost", 11530);
 			inputStream = 
-					new DataInputStream(clientSocket.getInputStream());
+					new DataInputStream(videoSocket.getInputStream());
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			return;
 		}
+		
 		while (!Thread.currentThread().isInterrupted())  {   
 		    try  {   
 				bytesRead = inputStream.read(SockBuf, 0, 2048000);
-				Log.e("Read", "Read");
 		    }catch (IOException e) {e.printStackTrace();break;}
 		    SockBufUsed =0;
 		    
 			while(bytesRead-SockBufUsed>0){
-				nalLen = MergeBuffer(NalBuf, NalBufUsed, SockBuf, SockBufUsed, bytesRead-SockBufUsed);
+				nalLen = MergeBuffer(NalBuf, NalBufUsed, 
+						SockBuf, SockBufUsed,
+						bytesRead-SockBufUsed);
 				NalBufUsed += nalLen;
 				SockBufUsed += nalLen;
 				

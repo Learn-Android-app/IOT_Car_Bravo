@@ -39,8 +39,7 @@ public class ReadFromCarRunnable implements Runnable {
 			String inputData = "";
 			while (isStart) {
 				inputData = reader.readLine();
-				if (inputData.length() !=0 && inputData.charAt(inputData.length() - 1) == '}') {
-					Log.d("收到的数据", inputData);
+				if (inputData.length() !=0) {
 					try {
 						int type = NetUtil.confirmType(inputData);
 						//处理命令
