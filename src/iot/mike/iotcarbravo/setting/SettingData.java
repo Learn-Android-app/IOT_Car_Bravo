@@ -8,7 +8,7 @@ public class SettingData {
 	public static int CarMainPort = 7890;
 	
 	public static final int KeyBoard = 1;
-	public static final int OnKeyBoard = 0;
+	public static final int NoKeyBoard = 0;
 	
 	public static volatile int CtrlMode = KeyBoard;
 	
@@ -17,4 +17,6 @@ public class SettingData {
 	public static final int NONE = 0;
 	
 	public static volatile int VideoMode = NONE;
+	
+	
 }

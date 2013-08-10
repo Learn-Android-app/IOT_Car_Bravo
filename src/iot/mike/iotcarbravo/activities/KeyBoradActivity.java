@@ -22,6 +22,7 @@ import org.json.JSONException;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -32,11 +33,6 @@ import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,13 +41,10 @@ import android.widget.Toast;
  * @author mikecoder
  * @date 2013-08-06
  */
-public class MainActivity extends Activity {
+public class KeyBoradActivity extends Activity {
 	private SocketManager socketManager = SocketManager.getInstance();
 	
 	private Dialog dialog;	
-	
-	private final static int OK = 9999;
-	private final static int StartLink = 9998;
 	
 	private OfflineMapView mapView;
 	private static VView videoView;
@@ -65,21 +58,7 @@ public class MainActivity extends Activity {
 				e.printStackTrace();
 			}
 			Message message = new Message();
-			message.what = OK;
-			MainctivityHandler_KeyBoard.sendMessage(message);
-		}
-	});
-	
-	private Thread initNOKeyBoardThread = new Thread(new Runnable() {
-		@Override
-		public void run() {
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			Message message = new Message();
-			message.what = OK;
+			message.what = ResultType.ReadyOK;
 			MainctivityHandler_KeyBoard.sendMessage(message);
 		}
 	});
@@ -98,15 +77,6 @@ public class MainActivity extends Activity {
 	private volatile float Ctrl_Y = 0; 
 	private volatile float Ctrl_Z = 0;//判断位
 	
-	
-	private Button SpeedUP_BTN;
-	private Button SpeedAVG_BTN;
-	private Button Stop_BTN;
-	
-	private Button CameraUP_BTN;
-	private Button CameraDOWN_BTN;
-	private Button CameraLEFT_BTN;
-	private Button CameraRIGHT_BTN;
 	
 	private Timer addSpeedTimer = null;
 	private class addSpeedTimerTask extends TimerTask{
@@ -181,19 +151,24 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		socketManager.startVideoServer();
 		if (SettingData.CtrlMode == SettingData.KeyBoard) {
 			setContentView(R.layout.activity_keyboard);
 			initKeyBoardViews();
 			socketManager.setKeyBoardActivityHandler(MainctivityHandler_KeyBoard);
 		}else {
-			setContentView(R.layout.activity_nokeyboard);
-			initNOKeyBoardViews();
+			Intent intent = new Intent(getApplicationContext(), NoKeyBoardActivity.class);
+			Toast.makeText(getApplicationContext(), 
+					"你选择了无外接键盘的操作方式", 
+					Toast.LENGTH_LONG).show();
+			startActivity(intent);
+			finish();
 		}
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.keyboard, menu);
 		return true;
 	}
 	
@@ -202,6 +177,7 @@ public class MainActivity extends Activity {
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		Log.e(keyCode + ":", event.toString());
 		TextView textView = (TextView)findViewById(R.id.textView1);
+		
 		try {
 			textView.setText(event.toString() + "\n" +
 					Action_Emotor.getInstance().getOrder());
@@ -280,7 +256,7 @@ public class MainActivity extends Activity {
 			if (keyCode == KeyEvent.KEYCODE_BACK) {
 				socketManager.startLink();
 				Message message = new Message();
-				message.what = StartLink;
+				message.what = ResultType.StartLink;
 				MainctivityHandler_KeyBoard.sendMessage(message);
 			}
 		}
@@ -375,13 +351,13 @@ public class MainActivity extends Activity {
 					break;
 				}
 				
-				case StartLink:{
+				case ResultType.StartLink:{
 					createGravitySensor();
 					createMagneticSensor();
 					break;
 				}
 				
-				case OK:{
+				case ResultType.ReadyOK:{
 					if (dialog != null) {
 						dialog.dismiss();
 						dialog.cancel();
@@ -404,46 +380,6 @@ public class MainActivity extends Activity {
 		initKeyBoardThread.start();
 		videoView = (VView)findViewById(R.id.video_VV);
 		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
-	}
-	
-	private void initNOKeyBoardViews(){
-		dialog = null;
-		dialog = onCreateDialog(2);
-		dialog.show();
-		initNOKeyBoardThread.start();
-		videoView = (VView)findViewById(R.id.videoView);
-		mapView = (OfflineMapView)findViewById(R.id.mapView);
-		SpeedAVG_BTN = (Button)findViewById(R.id.speedAVG_BTN);
-		SpeedAVG_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
-				Action_Emotor.getInstance(), 
-				Action_Steer.getInstance()));
-		SpeedUP_BTN = (Button)findViewById(R.id.speedUP_BTN);
-		SpeedUP_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
-				Action_Emotor.getInstance(), 
-				Action_Steer.getInstance()));
-		Stop_BTN = (Button)findViewById(R.id.stop_BTN);
-		Stop_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
-				Action_Emotor.getInstance(), 
-				Action_Steer.getInstance()));
-		
-		CameraDOWN_BTN = (Button)findViewById(R.id.camera_DOWN_BTN);
-		CameraDOWN_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
-				Action_Emotor.getInstance(),
-				Action_Steer.getInstance()));
-		
-		CameraLEFT_BTN = (Button)findViewById(R.id.camera_LEFT_BTN);
-		CameraLEFT_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
-				Action_Emotor.getInstance(),
-				Action_Steer.getInstance()));
-		CameraRIGHT_BTN = (Button)findViewById(R.id.camera_RIGHT_BTN);
-		CameraRIGHT_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
-				Action_Emotor.getInstance(), 
-				Action_Steer.getInstance()));
-		
-		CameraUP_BTN = (Button)findViewById(R.id.camera_UP_BTN);
-		CameraUP_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
-				Action_Emotor.getInstance(), 
-				Action_Steer.getInstance()));
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -559,75 +495,4 @@ public class MainActivity extends Activity {
         }
     }
     
-    private class MyOnTouchListener implements OnTouchListener{
-    	private SocketManager socketManager;
-    	private Action_Emotor action_Emotor;
-    	private Action_Steer action_Steer;
-    	
-    	public MyOnTouchListener(SocketManager socketManager,
-    			Action_Emotor action_Emotor,
-    			Action_Steer action_Steer){
-    		this.socketManager = socketManager;
-    		this.action_Emotor = action_Emotor;
-    		this.action_Steer = action_Steer;
-    	}
-    	
-		@Override
-		public boolean onTouch(View v, MotionEvent event) {
-			if (event.getAction() == KeyEvent.ACTION_DOWN) {
-				switch (v.getId()) {
-					case R.id.speedAVG_BTN:{
-						break;
-					}
-					case R.id.speedUP_BTN:{
-						break;
-					}
-					case R.id.stop_BTN:{
-						break;
-					}
-					case R.id.camera_DOWN_BTN:{
-						break;
-					}
-					case R.id.camera_LEFT_BTN:{
-						break;
-					}
-					case R.id.camera_RIGHT_BTN:{
-						break;
-					}
-					case R.id.camera_UP_BTN:{
-						break;
-					}
-					
-				}
-			}else if (event.getAction() == KeyEvent.ACTION_UP) {
-				switch (v.getId()) {
-					case R.id.speedAVG_BTN:{
-						break;
-					}
-					case R.id.speedUP_BTN:{
-						break;
-					}
-					case R.id.stop_BTN:{
-						break;
-					}
-					case R.id.camera_DOWN_BTN:{
-						break;
-					}
-					case R.id.camera_LEFT_BTN:{
-						break;
-					}
-					case R.id.camera_RIGHT_BTN:{
-						break;
-					}
-					case R.id.camera_UP_BTN:{
-						break;
-					}
-					
-				}
-			}
-			return false;
-		}
-    }
 }
-
-

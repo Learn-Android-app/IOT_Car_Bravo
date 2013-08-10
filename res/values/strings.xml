@@ -7,5 +7,6 @@
     <string name="title_activity_phone">控制器</string>
     <string name="title_activity_start">欢迎使用</string>
     <string name="title_activity_test">TestActivity</string>
+    <string name="title_activity_no_key_board">无键盘控制</string>
 
 </resources>

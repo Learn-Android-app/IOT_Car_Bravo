@@ -42,6 +42,27 @@ public class SocketManager {
 	}
 	
 	/**
+	 * 开启视频服务器
+	 */
+	public void startVideoServer(){
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
+					try {
+						vviewSocket = videoSocket.accept();
+						Log.d("VideoSocket", "New Comer");
+					} catch (IOException e) {
+						e.printStackTrace();
+						vviewSocket = null;
+					}
+				}
+				
+			}
+		});
+		thread.start();
+	}
+	/**
 	 * 给视频码流
 	 * @param framedata 视频数据
 	 * @return
@@ -99,10 +120,6 @@ public class SocketManager {
 									MainActivityHandler));
 					readFromCarThread.start();
 					NetUtil.sendList(writer);
-					while (true) {
-						vviewSocket = videoSocket.accept();
-						Log.d("VideoSocket", "New Comer");
-					}
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
 					try {MainSocket.close();} 

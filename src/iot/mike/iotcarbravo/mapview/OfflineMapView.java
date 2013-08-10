@@ -65,7 +65,11 @@ public class OfflineMapView extends ImageView {
 			Log.e("SDCard", "OK");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
-					String path = Environment.getExternalStorageDirectory().toString()+ "/OfflineMap/" + String.valueOf(zoom_Map) + "/" + location.PicFileNames[i][j];
+					String path = Environment.
+							getExternalStorageDirectory().toString()  
+							+ File.separator + "OfflineMap" + File.separator
+							+ String.valueOf(zoom_Map) + File.separator
+							+ location.PicFileNames[i][j];
 					Log.e("PicName", location.PicFileNames[i][j]);
 					RandomAccessFile mMiniThumbFile = null;
 					File imgfile = new File(path);
@@ -75,7 +79,8 @@ public class OfflineMapView extends ImageView {
 							mMiniThumbFile.seek(0);
 							mMiniThumbFile.read(data, 0, 25001);
 							// 通过data获得bitmap
-							mapBitmaps[i][j] = BitmapFactory.decodeByteArray(data, 0, data.length);
+							mapBitmaps[i][j] = 
+									BitmapFactory.decodeByteArray(data, 0, data.length);
 					} catch (Exception ex2) {
 						Toast.makeText(getContext(), "地图文件异常，是否没有地图包？", Toast.LENGTH_SHORT).show();
 						ex2.printStackTrace();
@@ -94,7 +99,7 @@ public class OfflineMapView extends ImageView {
 				for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
 					try{
-						mapCanvas.drawBitmap(mapBitmaps[i][j], 256 * i, 256 * j, mapPaint);
+						mapCanvas.drawBitmap(mapBitmaps[i][j], 256*i, 256*j, mapPaint);
 					}catch (Exception e) {
 						e.printStackTrace();
 						Resources res=getResources();
@@ -114,29 +119,56 @@ public class OfflineMapView extends ImageView {
 			Typeface typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.BOLD);
 			mapPaint.setTypeface(typeface);
 			if (location.draw_X < 384 && location.draw_Y < 384) {
-				mapCanvas.drawLine(location.draw_X + 10, location.draw_Y + 10, location.draw_X + 50, location.draw_Y + 50, mapPaint);
+				mapCanvas.drawLine(location.draw_X + 10, 
+						location.draw_Y + 10, location.draw_X + 50, 
+						location.draw_Y + 50, mapPaint);
 				mapPaint.setColor(Color.BLACK);
-				mapCanvas.drawText("目标车辆", location.draw_X + 55, location.draw_Y + 55, mapPaint);
-				mapCanvas.drawText("高度:" + String.valueOf((int)Height) + "M", location.draw_X + 55, location.draw_Y + 85, mapPaint);
-				mapCanvas.drawText("速度:" + String.valueOf((int)Speed) + "KM/H", location.draw_X + 55, location.draw_Y + 115, mapPaint);
+				mapCanvas.drawText("目标车辆", location.draw_X + 55, 
+						location.draw_Y + 55, mapPaint);
+				mapCanvas.drawText("高度:" + String.valueOf((int)Height)
+						+ "M", location.draw_X + 55, location.draw_Y
+						+ 85, mapPaint);
+				mapCanvas.drawText("速度:" + String.valueOf((int)Speed) 
+						+ "KM/H", location.draw_X + 55, 
+						location.draw_Y + 115, mapPaint);
 			}else if (location.draw_X > 384 && location.draw_Y < 384) {
-				mapCanvas.drawLine(location.draw_X - 10, location.draw_Y + 10, location.draw_X - 50, location.draw_Y + 50, mapPaint);
+				mapCanvas.drawLine(location.draw_X - 10, 
+						location.draw_Y + 10, location.draw_X - 50,
+						location.draw_Y + 50, mapPaint);
 				mapPaint.setColor(Color.BLACK);
-				mapCanvas.drawText("目标车辆", location.draw_X - 85, location.draw_Y + 80, mapPaint);
-				mapCanvas.drawText("高度:" + String.valueOf((int)Height) + "M", location.draw_X - 85, location.draw_Y + 110, mapPaint);
-				mapCanvas.drawText("速度:" + String.valueOf((int)Speed) + "KM/H", location.draw_X - 85, location.draw_Y + 140, mapPaint);
+				mapCanvas.drawText("目标车辆", location.draw_X - 85, 
+						location.draw_Y + 80, mapPaint);
+				mapCanvas.drawText("高度:" + 
+						String.valueOf((int)Height) + "M", 
+						location.draw_X - 85, location.draw_Y + 110,
+						mapPaint);
+				mapCanvas.drawText("速度:" + String.valueOf((int)Speed) + 
+						"KM/H", location.draw_X - 85, 
+						location.draw_Y + 140, mapPaint);
 			}else if (location.draw_X < 384 && location.draw_Y > 384) {
-				mapCanvas.drawLine(location.draw_X + 10, location.draw_Y - 10, location.draw_X + 50, location.draw_Y - 50, mapPaint);
+				mapCanvas.drawLine(location.draw_X + 10, 
+						location.draw_Y - 10, location.draw_X + 50, 
+						location.draw_Y - 50, mapPaint);
 				mapPaint.setColor(Color.BLACK);
-				mapCanvas.drawText("目标车辆", location.draw_X + 55, location.draw_Y - 55, mapPaint);
-				mapCanvas.drawText("高度:" + String.valueOf((int)Height) + "M", location.draw_X + 55, location.draw_Y - 85, mapPaint);
-				mapCanvas.drawText("速度:" + String.valueOf((int)Speed) + "KM/H", location.draw_X + 55, location.draw_Y - 115, mapPaint);
+				mapCanvas.drawText("目标车辆", location.draw_X + 55,
+						location.draw_Y - 55, mapPaint);
+				mapCanvas.drawText("高度:" + String.valueOf((int)Height) + "M",
+						location.draw_X + 55, location.draw_Y - 85, mapPaint);
+				mapCanvas.drawText("速度:" + String.valueOf((int)Speed) + "KM/H",
+						location.draw_X + 55, location.draw_Y - 115, mapPaint);
 			}else {
-				mapCanvas.drawLine(location.draw_X - 10, location.draw_Y - 10, location.draw_X - 50, location.draw_Y - 50, mapPaint);
+				mapCanvas.drawLine(location.draw_X - 10, 
+						location.draw_Y - 10, location.draw_X - 50, 
+						location.draw_Y - 50, mapPaint);
 				mapPaint.setColor(Color.BLACK);
-				mapCanvas.drawText("目标车辆", location.draw_X - 85, location.draw_Y - 55, mapPaint);
-				mapCanvas.drawText("高度:" + String.valueOf((int)Height) + "M", location.draw_X - 85, location.draw_Y - 85, mapPaint);
-				mapCanvas.drawText("速度:" + String.valueOf((int)Speed) + "KM/H", location.draw_X - 85, location.draw_Y - 115, mapPaint);
+				mapCanvas.drawText("目标车辆", location.draw_X - 85, 
+						location.draw_Y - 55, mapPaint);
+				mapCanvas.drawText("高度:" + String.valueOf((int)Height) + "M", 
+						location.draw_X - 85, 
+						location.draw_Y - 85, mapPaint);
+				mapCanvas.drawText("速度:" + String.valueOf((int)Speed) + "KM/H", 
+						location.draw_X - 85, 
+						location.draw_Y - 115, mapPaint);
 			}
 			
 			//-------------------------------------------
@@ -158,9 +190,12 @@ public class OfflineMapView extends ImageView {
 
 	public OfflineMapView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		gintama = BitmapFactory.decodeResource(getResources(), R.drawable.mi);
+		gintama = BitmapFactory.decodeResource(getResources(), 
+				R.drawable.mi);
 		DisplayMetrics dm = new DisplayMetrics();
-		dm = context.getApplicationContext().getResources().getDisplayMetrics();
+		dm = context.getApplicationContext().
+				getResources().getDisplayMetrics();
+		
 		widthScreen = dm.widthPixels;
 		heightScreen = dm.heightPixels;
 		matrix = new Matrix();
@@ -168,9 +203,12 @@ public class OfflineMapView extends ImageView {
 
 	public OfflineMapView(Context context) {
 		super(context);
-		gintama = BitmapFactory.decodeResource(getResources(), R.drawable.mi);
+		gintama = BitmapFactory.decodeResource(getResources(), 
+				R.drawable.mi);
 		DisplayMetrics dm = new DisplayMetrics();
-		dm = context.getApplicationContext().getResources().getDisplayMetrics();
+		dm = context.getApplicationContext().
+				getResources().getDisplayMetrics();
+		
 		widthScreen = dm.widthPixels;
 		heightScreen = dm.heightPixels;
 		matrix = new Matrix();
@@ -375,10 +413,12 @@ public class OfflineMapView extends ImageView {
 			return PNGNum;
 		}
 
-		/**
-		 * @param map_num_x
-		 *            ,map_num_y,z 算出地图左上角的经纬度 map_num_x:为地图的x map_num_y:为地图的y
-		 *            z:为缩放大小
+		/** 算出地图左上角的经纬度
+		 * @param map_num_x ,map_num_y,z 
+		 * 
+		 *  map_num_x:为地图的x
+		 * 	map_num_y:为地图的y 
+		 *	z:为缩放大小
 		 * @return 一个double[],用来存放地图右上角的经纬
 		 */
 		public static double[] getGMapPicLocation(long map_num_x,
@@ -438,8 +478,7 @@ public class OfflineMapView extends ImageView {
 		}
 
 		/**
-		 * @param map_num_y
-		 *            ,z 算出地图Y轴一个像素点的经纬度差 map_num_y:为地图编号 z:为地图缩放
+		 * @param map_num_y,z 算出地图Y轴一个像素点的经纬度差 map_num_y:为地图编号 z:为地图缩放
 		 * @return double 为像素纬度的值
 		 */
 		public static double getDeltaDegree_Y(long map_num_y, int z) {
@@ -496,14 +535,16 @@ public class OfflineMapView extends ImageView {
 							+ String.valueOf(Delta_Degree_Y)
 							+ ":Y:"
 							+ String.valueOf((Y_Degree - MapController
-									.getGMapPicLocation(X_PicNUM, Y_PicNUM, 18)[1])
+									.getGMapPicLocation
+									(X_PicNUM, Y_PicNUM, 18)[1])
 									/ Delta_Degree_X));
 			draw_X = 256 + (int) ((X_Degree - MapController.getGMapPicLocation(
 					X_PicNUM, Y_PicNUM, 18)[0]) / Delta_Degree_X);
 			draw_Y = 256 + (int) Math
 					.abs(((Y_Degree - MapController.getGMapPicLocation(
 							X_PicNUM, Y_PicNUM, 18)[1]) / Delta_Degree_X));
-			Log.e("坐标", String.valueOf(draw_X) + ":" + String.valueOf(draw_Y));
+			Log.e("坐标", String.valueOf(draw_X) + ":" + 
+							String.valueOf(draw_Y));
 		}
 	}
 }
