@@ -11,6 +11,7 @@ import iot.mike.iotcarbravo.data.Result_List;
 import iot.mike.iotcarbravo.data.Result_OKCamera;
 import iot.mike.iotcarbravo.data.Result_USBCamera;
 import iot.mike.iotcarbravo.mapview.OfflineMapView;
+import iot.mike.iotcarbravo.net.NetUtil;
 import iot.mike.iotcarbravo.net.SocketManager;
 import iot.mike.iotcarbravo.setting.SettingData;
 
@@ -84,7 +85,8 @@ public class KeyBoradActivity extends Activity {
 		public void run() {
 			Action_Emotor.getInstance().addSpeed();
 			try {
-				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+				socketManager.sendOrder(Action_Emotor.
+						getInstance().getOrder());
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -98,7 +100,8 @@ public class KeyBoradActivity extends Activity {
 		public void run() {
 			Action_Emotor.getInstance().addTurn();
 			try {
-				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+				socketManager.sendOrder(Action_Emotor.
+						getInstance().getOrder());
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -112,7 +115,8 @@ public class KeyBoradActivity extends Activity {
 		public void run() {
 			Action_Emotor.getInstance().reduceSpeed();
 			try {
-				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+				socketManager.sendOrder(Action_Emotor.
+						getInstance().getOrder());
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -126,7 +130,8 @@ public class KeyBoradActivity extends Activity {
 		public void run() {
 			Action_Emotor.getInstance().reduceTurn();
 			try {
-				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+				socketManager.sendOrder(Action_Emotor.
+						getInstance().getOrder());
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -139,8 +144,10 @@ public class KeyBoradActivity extends Activity {
 		try {
 			Action_Emotor.getInstance().reset();
 			Action_Steer.getInstance().reset();
-			socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
-			socketManager.sendOrder(Action_Steer.getInstance().getOrder());
+			socketManager.sendOrder(Action_Emotor.
+					getInstance().getOrder());
+			socketManager.sendOrder(Action_Steer.
+					getInstance().getOrder());
 			super.onDestroy();
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -155,9 +162,11 @@ public class KeyBoradActivity extends Activity {
 		if (SettingData.CtrlMode == SettingData.KeyBoard) {
 			setContentView(R.layout.activity_keyboard);
 			initKeyBoardViews();
-			socketManager.setKeyBoardActivityHandler(MainctivityHandler_KeyBoard);
+			socketManager.setKeyBoardActivityHandler(
+					MainctivityHandler_KeyBoard);
 		}else {
-			Intent intent = new Intent(getApplicationContext(), NoKeyBoardActivity.class);
+			Intent intent = new Intent(getApplicationContext(),
+					NoKeyBoardActivity.class);
 			Toast.makeText(getApplicationContext(), 
 					"你选择了无外接键盘的操作方式", 
 					Toast.LENGTH_LONG).show();
@@ -244,7 +253,8 @@ public class KeyBoradActivity extends Activity {
 						Toast.LENGTH_LONG).show();
 				Action_Steer action_Steer = Action_Steer.getInstance();
 				action_Steer.setA(0);action_Steer.setB(0);
-				Action_USBCamera action_USBCamera = Action_USBCamera.getInstance();
+				Action_USBCamera action_USBCamera = Action_USBCamera.
+						getInstance();
 				action_USBCamera.setMode(CameraMode.on);
 				try {
 					socketManager.sendOrder(action_USBCamera.getOrder());
@@ -327,7 +337,8 @@ public class KeyBoradActivity extends Activity {
 				case ResultType.Result_OKCamera:{
 					Result_OKCamera result_OKCamera = 
 							Result_OKCamera.getInstance();
-					socketManager.sendVideo(result_OKCamera.getFrameData());
+					socketManager.sendVideo(
+							result_OKCamera.getFrameData());
 					break;
 				}
 				
@@ -347,13 +358,15 @@ public class KeyBoradActivity extends Activity {
 				case ResultType.Result_USBCamera:{
 					Result_USBCamera result_USBCamera = 
 							Result_USBCamera.getInstance();
-					socketManager.sendVideo(result_USBCamera.getFrameData());
+					socketManager.sendVideo(
+							result_USBCamera.getFrameData());
 					break;
 				}
 				
 				case ResultType.StartLink:{
 					createGravitySensor();
 					createMagneticSensor();
+					socketManager.sendOrder(NetUtil.GPS_SETTING);
 					break;
 				}
 				
@@ -380,6 +393,7 @@ public class KeyBoradActivity extends Activity {
 		initKeyBoardThread.start();
 		videoView = (VView)findViewById(R.id.video_VV);
 		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
+		mapView.setLocation(120.6445062160492, 31.313328693635174, 18, 0, 0);
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -419,20 +433,27 @@ public class KeyBoradActivity extends Activity {
 	       			ox = event.values[SensorManager.DATA_X];
 	       			current_direction = ox;
 	       			if(pre_direction < 180){	//这个初始角的位置小于180度
-	       				if(ox > (pre_direction + 180) || ox < pre_direction){	//现在这个角度在pre_direction的左侧
+	       				if(ox > (pre_direction + 180) 
+	       						|| ox < pre_direction){	
+	       					//现在这个角度在pre_direction的左侧
 	       					if(ox >= pre_direction) //这个角度是没有过0度
 	       						degree = -(360 - ox + pre_direction);
-	       					else degree = -(pre_direction - ox); //是过了0度，在pre_direction和0之间
+	       					else degree = -(pre_direction - ox); 
+	       					//是过了0度，在pre_direction和0之间
 	       				}else {	//在pre_direction的右侧
 	       					degree = ox - pre_direction;
 	       				}
 	       			}else {	//这个初始角的位置大于180度
-	       				if(ox > pre_direction - 180 && ox < pre_direction){	//现在这个角度在pre_direction的左侧
+	       				if(ox > pre_direction - 180 
+	       						&& ox < pre_direction){	
+	       					//现在这个角度在pre_direction的左侧
 	        					degree = -(pre_direction - ox);
 	       				}else {	//在pre_direction的右侧
-	       					if (ox >= pre_direction) //这个角度在pre_direction和0之间
+	       					if (ox >= pre_direction) 
+	       						//这个角度在pre_direction和0之间
 	        						degree = ox - pre_direction;
-	       					else degree = 360 + ox - pre_direction;	//这个角过了0度
+	       					else degree = 360 + ox - pre_direction;	
+	       					//这个角过了0度
 	       				}
 	       			}
 	       			Ctrl_X = degree;
@@ -490,6 +511,7 @@ public class KeyBoradActivity extends Activity {
                 dialog.setMessage("Please wait while loading...");
                 dialog.setIndeterminate(true);
                 dialog.setCancelable(true);
+                dialog.setCanceledOnTouchOutside(false);
                 return dialog;
             }
         }

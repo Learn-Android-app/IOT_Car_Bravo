@@ -16,7 +16,14 @@ import android.os.Message;
 public class NetUtil {
 	private NetUtil(){}
 	
-	private static final String GPS_SETTING = "{\"action\":\"gps\"}";
+	public static final String GPS_SETTING = "{"
+			+ "\"action\":\"gps\","
+			+ "\"param\":{"
+			+ "\"longtitude\":\"on\", "
+			+ "\"latitude\":\"on\","
+			+ "\"height\":\"on\","
+			+ "\"speed\":\"on\""
+			+ "\"direction\":\"on\"}}";
 	
 	/**
 	 * 用来检测返回值的类型
@@ -73,7 +80,8 @@ public class NetUtil {
 	public static void sendGPSSetting(OutputStreamWriter writer) 
 			throws IOException{
 		synchronized (writer) {
-			writer.write(GPS_SETTING + "\n");
+			System.out.println(GPS_SETTING);
+			//writer.write(GPS_SETTING + "\n");
 			writer.flush();
 		}
 	}

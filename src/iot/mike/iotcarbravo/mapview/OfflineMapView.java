@@ -67,7 +67,7 @@ public class OfflineMapView extends ImageView {
 				for (int j = 0; j < 3; j++) {
 					String path = Environment.
 							getExternalStorageDirectory().toString()  
-							+ File.separator + "OfflineMap" + File.separator
+							+ File.separator + "IOT.MIKE.CAR" + File.separator
 							+ String.valueOf(zoom_Map) + File.separator
 							+ location.PicFileNames[i][j];
 					Log.e("PicName", location.PicFileNames[i][j]);
