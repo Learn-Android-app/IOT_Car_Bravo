@@ -1,10 +1,8 @@
 package iot.mike.iotcarbravo.activities;
 
-import iot.mike.iotcarbravo.mapview.GPSTranUTIL;
 import iot.mike.iotcarbravo.setting.SettingData;
 
 import java.io.File;
-import java.io.IOException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -18,7 +16,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -100,13 +97,11 @@ public class StartActivity extends Activity {
 			}
 			
 			try {
-				GPSTranUTIL.createHashMap(GPS_S);
-			} catch (IOException e) {
-				Message message = new Message();
-				message.what = 2;
-				startHandler.sendMessage(message);
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-			
+			isOK = true;
 			Message message = new Message();
 			message.what = 1;
 			startHandler.sendMessage(message);

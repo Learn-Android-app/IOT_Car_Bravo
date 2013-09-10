@@ -225,11 +225,14 @@ public class OfflineMapView extends ImageView {
 	public void setLocation(double _x, 
 			double _y, int _z, double _direction, 
 			double _speed, double _height) {
-		location.X_Degree = _x;
-		location.Y_Degree = _y;
+		
+		location.X_Degree = _x + 0.00425;
+		location.Y_Degree = _y - 0.00215;
+		
+		Log.v("" + location.X_Degree, location.Y_Degree + "");
 		location.z = _z;
 		zoom_Map = _z;
-		location.DegreeToPicNUM(_x, _y, _z);
+		location.DegreeToPicNUM(location.X_Degree, location.Y_Degree, location.z);
 		location.getFileName();
 		Speed = _speed;
 		Degree = _direction;
@@ -242,18 +245,20 @@ public class OfflineMapView extends ImageView {
 	 * @param _x 经度
 	 * @param _y 纬度
 	 * @param _z 缩放
-	 * @param _direction 小车的角度
 	 * @param _speed 小车速度
 	 * @param _height 小车海拔
 	 */
 	public void setLocation(double _x, 
 			double _y, int _z,
 			double _speed, double _height) {
-		location.X_Degree = _x;
-		location.Y_Degree = _y;
+		
+		location.X_Degree = _x + 0.00425;
+		location.Y_Degree = _y - 0.00215;
+		
+		Log.v("" + location.X_Degree, location.Y_Degree + "");
 		location.z = _z;
 		zoom_Map = _z;
-		location.DegreeToPicNUM(_x, _y, _z);
+		location.DegreeToPicNUM(location.X_Degree, location.Y_Degree, location.z);
 		location.getFileName();
 		Speed = _speed;
 		Height = _height;

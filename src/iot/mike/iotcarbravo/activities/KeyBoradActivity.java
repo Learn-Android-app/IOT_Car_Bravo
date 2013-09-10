@@ -393,7 +393,7 @@ public class KeyBoradActivity extends Activity {
 		initKeyBoardThread.start();
 		videoView = (VView)findViewById(R.id.video_VV);
 		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
-		mapView.setLocation(120.6445062160492, 31.313328693635174, 18, 0, 0);
+		mapView.setLocation(120.638696551304, 31.304066035848, 18, 0, 0);
 	}
 	
 	@SuppressWarnings("deprecation")
