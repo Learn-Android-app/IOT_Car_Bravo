@@ -198,6 +198,12 @@ public class KeyBoradActivity extends Activity {
 				|| keyCode == KeyEvent.KEYCODE_NUMPAD_5) {
 			Action_Emotor.getInstance().reset();
 			Action_Steer.getInstance().reset();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+				socketManager.sendOrder(Action_Steer.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
 		//上键,加速
 		if (keyCode == KeyEvent.KEYCODE_DPAD_UP
@@ -279,7 +285,11 @@ public class KeyBoradActivity extends Activity {
 		if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
 				|| keyCode == KeyEvent.KEYCODE_NUMPAD_5) {
 			Action_Emotor.getInstance().reset();
-			Action_Steer.getInstance().reset();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
 		//上键,加速
 		if (keyCode == KeyEvent.KEYCODE_DPAD_UP
@@ -289,6 +299,11 @@ public class KeyBoradActivity extends Activity {
 				addSpeedTimer = null;
 			}
 			Action_Emotor.getInstance().reset();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
 		//下键,减速
 		if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN
@@ -298,6 +313,11 @@ public class KeyBoradActivity extends Activity {
 				reduceSpeedTimer = null;
 			}
 			Action_Emotor.getInstance().reset();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
 		//左键,左拐
 		if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT
@@ -307,6 +327,11 @@ public class KeyBoradActivity extends Activity {
 				reduceTurnTimer = null;
 			}
 			Action_Emotor.getInstance().reset();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
 		//右键,右拐
 		if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
@@ -316,6 +341,11 @@ public class KeyBoradActivity extends Activity {
 				addTurnTimer = null;
 			}
 			Action_Emotor.getInstance().reset();
+			try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
 		return false;
 	}	
