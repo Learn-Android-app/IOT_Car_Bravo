@@ -62,6 +62,8 @@ public class NoKeyBoardActivity extends Activity {
 		if (SettingData.CtrlMode == SettingData.KeyBoard) {
 			Intent intent = new Intent(getApplicationContext(), 
 					KeyBoradActivity.class);
+			startActivity(intent);
+			finish();
 		}
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_nokeyboard);
@@ -134,24 +136,31 @@ public class NoKeyBoardActivity extends Activity {
 			if (event.getAction() == KeyEvent.ACTION_DOWN) {
 				switch (v.getId()) {
 					case R.id.speedAVG_BTN:{
+						
 						break;
 					}
 					case R.id.speedUP_BTN:{
+						
 						break;
 					}
 					case R.id.stop_BTN:{
+						
 						break;
 					}
 					case R.id.camera_DOWN_BTN:{
+						
 						break;
 					}
 					case R.id.camera_LEFT_BTN:{
+						
 						break;
 					}
 					case R.id.camera_RIGHT_BTN:{
+						
 						break;
 					}
 					case R.id.camera_UP_BTN:{
+						
 						break;
 					}
 					

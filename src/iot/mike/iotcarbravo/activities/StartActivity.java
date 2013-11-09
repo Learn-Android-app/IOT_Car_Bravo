@@ -47,7 +47,6 @@ public class StartActivity extends Activity {
 				}
 				SettingData.CtrlMode = SettingData.KeyBoard;
 				startActivity(intent);
-				finish();
 			}
 		});
 		
@@ -61,7 +60,6 @@ public class StartActivity extends Activity {
 					System.exit(2);
 				}
 				startActivity(intent);
-				finish();
 			}
 		});
 	}
