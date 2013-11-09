@@ -1,5 +1,8 @@
 package iot.mike.iotcarbravo.activities;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import h264.com.VView;
 import iot.mike.iotcarbravo.data.Action_Emotor;
 import iot.mike.iotcarbravo.data.Action_Steer;
@@ -20,6 +23,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -323,4 +327,26 @@ public class NoKeyBoardActivity extends Activity {
         sensorManager.registerListener(lsn, sensor, SensorManager.SENSOR_DELAY_GAME);
     }
     //-----------------------------------------------------------------------------
+    
+    //发送命令区域
+    //--------------------------------------------------------
+    private Timer sendOrderTimer = new Timer();
+    private class sendOrderTimeTask  extends TimerTask{
+    	@Override
+		public void run() {
+			
+		}
+	};
+    //--------------------------------------------------------
+    
+    //加减速度区域
+    //--------------------------------------------------------
+    private Timer addspeedTimer = new Timer();
+    private class addSpeedTimerTask extends TimerTask {//用来加速度的任务
+    	@Override
+		public void run() {
+			
+    	};
+    }
+	//--------------------------------------------------------
 }
