@@ -1,8 +1,5 @@
 package iot.mike.iotcarbravo.activities;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import h264.com.VView;
 import iot.mike.iotcarbravo.data.Action_Emotor;
 import iot.mike.iotcarbravo.data.Action_Steer;
@@ -14,6 +11,12 @@ import iot.mike.iotcarbravo.data.Result_USBCamera;
 import iot.mike.iotcarbravo.mapview.OfflineMapView;
 import iot.mike.iotcarbravo.net.SocketManager;
 import iot.mike.iotcarbravo.setting.SettingData;
+
+import java.util.Timer;
+import java.util.TimerTask;
+
+import org.json.JSONException;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -28,9 +31,11 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 public class NoKeyBoardActivity extends Activity {
 	private Button SpeedUP_BTN;
@@ -41,6 +46,8 @@ public class NoKeyBoardActivity extends Activity {
 	private Button CameraDOWN_BTN;
 	private Button CameraLEFT_BTN;
 	private Button CameraRIGHT_BTN;
+	
+	private ToggleButton startLink_TBN;
 	
 	private OfflineMapView mapView;
 	private static VView videoView;
@@ -86,6 +93,19 @@ public class NoKeyBoardActivity extends Activity {
 		initNOKeyBoardThread.start();
 		
 		createGravitySensor();
+		
+		startLink_TBN = (ToggleButton)findViewById(R.id.carState_TBTN);
+		startLink_TBN.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				socketManager = SocketManager.getInstance();
+				if (socketManager.startLink()){
+				    Toast.makeText(getApplicationContext(), "小车连接成功！", Toast.LENGTH_LONG).show();
+				}else {
+				    Toast.makeText(getApplicationContext(), "小车连接失败！", Toast.LENGTH_LONG).show();
+                }
+			}
+		});
 		
 		videoView = (VView)findViewById(R.id.videoView);
 		mapView = (OfflineMapView)findViewById(R.id.mapView);
@@ -140,44 +160,116 @@ public class NoKeyBoardActivity extends Activity {
 			if (event.getAction() == KeyEvent.ACTION_DOWN) {
 				switch (v.getId()) {
 					case R.id.speedAVG_BTN:{
+						avgspeedTimer = null;
+						sendOrderTimer = null;
 						
+						avgspeedTimer = new Timer();
+						sendOrderTimer = new Timer();
+						
+						avgSpeedTimerTask aSpeedTimerTask = new avgSpeedTimerTask();
+						sendOrderTimerTask sendTask = new sendOrderTimerTask();
+						
+						avgspeedTimer.schedule(aSpeedTimerTask, 0, 50);
+						sendOrderTimer.schedule(sendTask, 0, 500);
 						break;
 					}
 					case R.id.speedUP_BTN:{
+						addspeedTimer = null;
+						sendOrderTimer = null;
 						
+						addspeedTimer = new Timer();
+						sendOrderTimer = new Timer();
+						
+						addSpeedTimerTask aSpeedTimerTask = new addSpeedTimerTask();
+						sendOrderTimerTask sOrderTimerTask = new sendOrderTimerTask();
+						
+						addspeedTimer.schedule(aSpeedTimerTask, 0, 50);
+						sendOrderTimer.schedule(sOrderTimerTask, 0, 500);
 						break;
 					}
 					case R.id.stop_BTN:{
-						
+						socketManager = SocketManager.getInstance();
+						Action_Emotor action_Emotor = Action_Emotor.getInstance();
+						action_Emotor.reset();
+						try {
+	                        socketManager.sendOrder(action_Emotor.getOrder());
+                        } catch (JSONException e) {
+	                        e.printStackTrace();
+                        }
 						break;
 					}
 					case R.id.camera_DOWN_BTN:{
+						Action_Steer action_Steer = Action_Steer.getInstance();
+						action_Steer.redB();
+						socketManager = SocketManager.getInstance();
 						
+						try {
+	                        socketManager.sendOrder(action_Steer.getOrder());
+                        } catch (JSONException e) {
+	                        e.printStackTrace();
+                        }
 						break;
 					}
 					case R.id.camera_LEFT_BTN:{
+						Action_Steer action_Steer = Action_Steer.getInstance();
+						action_Steer.redA();
+						socketManager = SocketManager.getInstance();
 						
+						try {
+	                        socketManager.sendOrder(action_Steer.getOrder());
+                        } catch (JSONException e) {
+	                        e.printStackTrace();
+                        }
 						break;
 					}
 					case R.id.camera_RIGHT_BTN:{
+						Action_Steer action_Steer = Action_Steer.getInstance();
+						action_Steer.addA();
+						socketManager = SocketManager.getInstance();
 						
+						try {
+	                        socketManager.sendOrder(action_Steer.getOrder());
+                        } catch (JSONException e) {
+	                        e.printStackTrace();
+                        }
 						break;
 					}
 					case R.id.camera_UP_BTN:{
+						Action_Steer action_Steer = Action_Steer.getInstance();
+						action_Steer.addB();
+						socketManager = SocketManager.getInstance();
 						
+						try {
+	                        socketManager.sendOrder(action_Steer.getOrder());
+                        } catch (JSONException e) {
+	                        e.printStackTrace();
+                        }
 						break;
 					}
 					
 				}
 			}else if (event.getAction() == KeyEvent.ACTION_UP) {
+				if (sendOrderTimer != null) {
+					sendOrderTimer.cancel();
+                }
+				sendOrderTimer = null;
 				switch (v.getId()) {
 					case R.id.speedAVG_BTN:{
+						if (avgspeedTimer != null) {
+							avgspeedTimer.cancel();
+                        }
+						avgspeedTimer = null;
 						break;
 					}
 					case R.id.speedUP_BTN:{
+						if (addspeedTimer != null) {
+	                        addspeedTimer.cancel();
+                        }
+						addspeedTimer = null;
 						break;
 					}
 					case R.id.stop_BTN:{
+						
 						break;
 					}
 					case R.id.camera_DOWN_BTN:{
@@ -241,6 +333,7 @@ public class NoKeyBoardActivity extends Activity {
 				}
 				
 				case ResultType.StartLink:{
+					socketManager.startLink();
 					break;
 				}
 				
@@ -318,7 +411,7 @@ public class NoKeyBoardActivity extends Activity {
                 action_Emotor.setX(TurnD);
                 //Log.e(String.valueOf(TurnD), String.valueOf(isTurnLeft));
                 //----------打印值
-                //Toast.makeText(getApplicationContext(), String.valueOf(x) + ":" +String.valueOf(y) + ":" + String.valueOf(z), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), String.valueOf(x) + ":" +String.valueOf(y) + ":" + String.valueOf(z), Toast.LENGTH_SHORT).show();
             }
             
             public void onAccuracyChanged(Sensor s, int accuracy) {}
@@ -330,11 +423,12 @@ public class NoKeyBoardActivity extends Activity {
     
     //发送命令区域
     //--------------------------------------------------------
-    private Timer sendOrderTimer = new Timer();
-    private class sendOrderTimeTask  extends TimerTask{
+    private Timer slowSpeedTimer = new Timer();
+    private class slowSpeedTimerTask extends TimerTask{
     	@Override
 		public void run() {
-			
+			Action_Emotor action_Emotor = Action_Emotor.getInstance();
+			action_Emotor.reduceSpeed();
 		}
 	};
     //--------------------------------------------------------
@@ -345,7 +439,37 @@ public class NoKeyBoardActivity extends Activity {
     private class addSpeedTimerTask extends TimerTask {//用来加速度的任务
     	@Override
 		public void run() {
-			
+			Action_Emotor action_Emotor = Action_Emotor.getInstance();
+			action_Emotor.addSpeed();
+    	};
+    }
+	//--------------------------------------------------------
+    
+    //均匀速度区域
+    //--------------------------------------------------------
+    private Timer avgspeedTimer = new Timer();
+    private class avgSpeedTimerTask extends TimerTask {//用来加速度的任务
+    	@Override
+		public void run() {
+			Action_Emotor action_Emotor = Action_Emotor.getInstance();
+    	};
+    }
+	//--------------------------------------------------------
+    
+    //发送指令区域
+    //--------------------------------------------------------
+    private Timer sendOrderTimer = new Timer();
+    private class sendOrderTimerTask extends TimerTask {//用来加速度的任务
+    	@Override
+		public void run() {
+    		socketManager = SocketManager.getInstance();
+    		try {
+				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+				Log.v("Order Send", Action_Emotor.getInstance().getOrder());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+    		
     	};
     }
 	//--------------------------------------------------------

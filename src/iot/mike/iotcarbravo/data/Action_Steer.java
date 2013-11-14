@@ -80,4 +80,19 @@ public class Action_Steer {
 		return param.getB();
 	}
 	
+	public void addA() {
+	    this.setA(this.getA() + 10);
+    }
+	
+	public void redA() {
+	    this.setA(this.getA() - 10);
+    }
+	
+	public void addB() {
+	    this.setB(this.getB() + 10);
+    }
+	
+	public void redB() {
+	    this.setB(this.getB() - 10);
+    }
 }
