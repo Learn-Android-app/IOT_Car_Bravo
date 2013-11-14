@@ -3,6 +3,8 @@ package iot.mike.iotcarbravo.activities;
 import h264.com.VView;
 import iot.mike.iotcarbravo.data.Action_Emotor;
 import iot.mike.iotcarbravo.data.Action_Steer;
+import iot.mike.iotcarbravo.data.Action_USBCamera;
+import iot.mike.iotcarbravo.data.CameraMode;
 import iot.mike.iotcarbravo.data.ResultType;
 import iot.mike.iotcarbravo.data.Result_GPS;
 import iot.mike.iotcarbravo.data.Result_List;
@@ -41,6 +43,7 @@ public class NoKeyBoardActivity extends Activity {
 	private Button SpeedUP_BTN;
 	private Button SpeedAVG_BTN;
 	private Button Stop_BTN;
+	private Button Slow_BTN;
 	
 	private Button CameraUP_BTN;
 	private Button CameraDOWN_BTN;
@@ -77,6 +80,7 @@ public class NoKeyBoardActivity extends Activity {
 			finish();
 		}
 		super.onCreate(savedInstanceState);
+		socketManager.setKeyBoardActivityHandler(MainctivityHandler_NoKeyBoard);
 		setContentView(R.layout.activity_nokeyboard);
 		initNOKeyBoardViews();
 	}
@@ -95,11 +99,22 @@ public class NoKeyBoardActivity extends Activity {
 		createGravitySensor();
 		
 		startLink_TBN = (ToggleButton)findViewById(R.id.carState_TBTN);
+		startLink_TBN.setChecked(false);
 		startLink_TBN.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+			    Action_USBCamera action_USBCamera = Action_USBCamera.getInstance();
+			    action_USBCamera.setMode(CameraMode.on);
+			    
 				socketManager = SocketManager.getInstance();
 				if (socketManager.startLink()){
+				    try {
+                        socketManager.sendOrder(action_USBCamera.getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+				    socketManager.startVideoServer();
+			        videoView.playVideo();
 				    Toast.makeText(getApplicationContext(), "小车连接成功！", Toast.LENGTH_LONG).show();
 				}else {
 				    Toast.makeText(getApplicationContext(), "小车连接失败！", Toast.LENGTH_LONG).show();
@@ -108,6 +123,7 @@ public class NoKeyBoardActivity extends Activity {
 		});
 		
 		videoView = (VView)findViewById(R.id.videoView);
+		
 		mapView = (OfflineMapView)findViewById(R.id.mapView);
 		SpeedAVG_BTN = (Button)findViewById(R.id.speedAVG_BTN);
 		SpeedAVG_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
@@ -121,6 +137,11 @@ public class NoKeyBoardActivity extends Activity {
 		Stop_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
 				Action_Emotor.getInstance(), 
 				Action_Steer.getInstance()));
+		
+		Slow_BTN = (Button)findViewById(R.id.speedDOWN_BTN);
+		Slow_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
+		        Action_Emotor.getInstance(), 
+		        Action_Steer.getInstance()));
 		
 		CameraDOWN_BTN = (Button)findViewById(R.id.camera_DOWN_BTN);
 		CameraDOWN_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
@@ -198,6 +219,19 @@ public class NoKeyBoardActivity extends Activity {
                         }
 						break;
 					}
+					case R.id.speedDOWN_BTN: {
+					    socketManager = SocketManager.getInstance();
+					    Action_Emotor action_Emotor = Action_Emotor.getInstance();
+					    action_Emotor.reduceSpeed();
+					    
+					    try {
+                            socketManager.sendOrder(action_Emotor.getOrder());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+					    break;
+					}
+					
 					case R.id.camera_DOWN_BTN:{
 						Action_Steer action_Steer = Action_Steer.getInstance();
 						action_Steer.redB();
@@ -249,6 +283,13 @@ public class NoKeyBoardActivity extends Activity {
 					
 				}
 			}else if (event.getAction() == KeyEvent.ACTION_UP) {
+			    Action_Emotor.getInstance().reset();
+			    socketManager = SocketManager.getInstance();
+			    try {
+                    socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 				if (sendOrderTimer != null) {
 					sendOrderTimer.cancel();
                 }
@@ -272,6 +313,15 @@ public class NoKeyBoardActivity extends Activity {
 						
 						break;
 					}
+					
+					case R.id.speedDOWN_BTN:{
+					    if (slowSpeedTimer != null) {
+                            slowSpeedTimer.cancel();
+                        }
+					    slowSpeedTimer = null;
+					    break;
+					}
+					
 					case R.id.camera_DOWN_BTN:{
 						break;
 					}
@@ -338,7 +388,6 @@ public class NoKeyBoardActivity extends Activity {
 				}
 				
 				case ResultType.ReadyOK:{
-					videoView.playVideo();
 					break;
 				}
 				default:{
@@ -365,6 +414,7 @@ public class NoKeyBoardActivity extends Activity {
         // 实例化一个监听器
         SensorEventListener lsn = new SensorEventListener() {
             // 实现接口的方法
+            @SuppressWarnings("deprecation")
             public void onSensorChanged(SensorEvent e) {
                 // 得到各轴上的重力加速度
                 x = e.values[SensorManager.DATA_X];
@@ -411,7 +461,7 @@ public class NoKeyBoardActivity extends Activity {
                 action_Emotor.setX(TurnD);
                 //Log.e(String.valueOf(TurnD), String.valueOf(isTurnLeft));
                 //----------打印值
-                Toast.makeText(getApplicationContext(), String.valueOf(x) + ":" +String.valueOf(y) + ":" + String.valueOf(z), Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(), String.valueOf(x) + ":" +String.valueOf(y) + ":" + String.valueOf(z), Toast.LENGTH_SHORT).show();
             }
             
             public void onAccuracyChanged(Sensor s, int accuracy) {}
@@ -424,6 +474,7 @@ public class NoKeyBoardActivity extends Activity {
     //发送命令区域
     //--------------------------------------------------------
     private Timer slowSpeedTimer = new Timer();
+    @SuppressWarnings("unused")
     private class slowSpeedTimerTask extends TimerTask{
     	@Override
 		public void run() {
