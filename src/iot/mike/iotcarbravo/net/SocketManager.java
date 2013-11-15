@@ -1,5 +1,6 @@
 package iot.mike.iotcarbravo.net;
 
+import iot.mike.iotcarbravo.data.Action_List;
 import iot.mike.iotcarbravo.setting.SettingData;
 
 import java.io.BufferedReader;
@@ -10,6 +11,8 @@ import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+
+import org.json.JSONException;
 
 import android.os.Handler;
 import android.util.Log;
@@ -71,9 +74,10 @@ public class SocketManager {
 		if (vviewSocket != null) {
 			try {
 				vviewSocket.getOutputStream().write(framedata);
-				Log.d("VideoSocket", "Send OK");
+				//Log.d("VideoSocket", "Send OK");
 				return true;
 			} catch (IOException e) {
+			    Log.d("VideoSocket", "Send Failed");
 				e.printStackTrace();
 				return false;
 			}
@@ -164,6 +168,7 @@ public class SocketManager {
 			if (writer != null) {
 				synchronized (writer) {
 					writer.write(jsonorder + "\n");
+					Log.v("Order", jsonorder); 
 					writer.flush();
 					return true;
 				}
@@ -176,6 +181,25 @@ public class SocketManager {
 		}
 	}
 	
+	/**
+	 * 测试连接
+	 * @return 是否成功
+	 */
+	public boolean sendTest() {
+        if (writer == null) {
+            return false;
+        }else {
+            try {
+                writer.write(Action_List.getInstance().getOrder());
+                return true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return false;
+        }
+    }
 
 	
 	/**

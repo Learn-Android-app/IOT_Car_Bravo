@@ -33,9 +33,10 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -45,6 +46,7 @@ public class NoKeyBoardActivity extends Activity {
 	private Button Stop_BTN;
 	private Button Slow_BTN;
 	
+	private Button CameraRESER_BTN;
 	private Button CameraUP_BTN;
 	private Button CameraDOWN_BTN;
 	private Button CameraLEFT_BTN;
@@ -100,27 +102,32 @@ public class NoKeyBoardActivity extends Activity {
 		
 		startLink_TBN = (ToggleButton)findViewById(R.id.carState_TBTN);
 		startLink_TBN.setChecked(false);
-		startLink_TBN.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-			    Action_USBCamera action_USBCamera = Action_USBCamera.getInstance();
-			    action_USBCamera.setMode(CameraMode.on);
-			    
-				socketManager = SocketManager.getInstance();
-				if (socketManager.startLink()){
-				    try {
-                        socketManager.sendOrder(action_USBCamera.getOrder());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+		startLink_TBN.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+            
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Action_USBCamera action_USBCamera = Action_USBCamera.getInstance();
+                    action_USBCamera.setMode(CameraMode.on);
+                    
+                    socketManager = SocketManager.getInstance();
+                    if (socketManager.startLink()){
+                        try {
+                            socketManager.sendOrder(action_USBCamera.getOrder());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        socketManager.startVideoServer();
+                        videoView.playVideo();
+                        Toast.makeText(getApplicationContext(), "小车连接成功！", Toast.LENGTH_LONG).show();
+                    }else {
+                        Toast.makeText(getApplicationContext(), "小车连接失败！", Toast.LENGTH_LONG).show();
                     }
-				    socketManager.startVideoServer();
-			        videoView.playVideo();
-				    Toast.makeText(getApplicationContext(), "小车连接成功！", Toast.LENGTH_LONG).show();
-				}else {
-				    Toast.makeText(getApplicationContext(), "小车连接失败！", Toast.LENGTH_LONG).show();
+                }else {
+                   
                 }
-			}
-		});
+            }
+        });
 		
 		videoView = (VView)findViewById(R.id.videoView);
 		
@@ -133,14 +140,19 @@ public class NoKeyBoardActivity extends Activity {
 		SpeedUP_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
 				Action_Emotor.getInstance(), 
 				Action_Steer.getInstance()));
-		Stop_BTN = (Button)findViewById(R.id.stop_BTN);
-		Stop_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
-				Action_Emotor.getInstance(), 
-				Action_Steer.getInstance()));
+		//Stop_BTN = (Button)findViewById(R.id.stop_BTN);
+		//Stop_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
+		//		Action_Emotor.getInstance(), 
+		//		Action_Steer.getInstance()));
 		
 		Slow_BTN = (Button)findViewById(R.id.speedDOWN_BTN);
 		Slow_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
 		        Action_Emotor.getInstance(), 
+		        Action_Steer.getInstance()));
+		
+		CameraRESER_BTN = (Button)findViewById(R.id.camera_RESET_BTN);
+		CameraRESER_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
+		        Action_Emotor.getInstance(),
 		        Action_Steer.getInstance()));
 		
 		CameraDOWN_BTN = (Button)findViewById(R.id.camera_DOWN_BTN);
@@ -165,15 +177,11 @@ public class NoKeyBoardActivity extends Activity {
 	
 	private class MyOnTouchListener implements OnTouchListener{
     	private SocketManager socketManager;
-    	private Action_Emotor action_Emotor;
-    	private Action_Steer action_Steer;
     	
     	public MyOnTouchListener(SocketManager socketManager,
     			Action_Emotor action_Emotor,
     			Action_Steer action_Steer){
     		this.socketManager = socketManager;
-    		this.action_Emotor = action_Emotor;
-    		this.action_Steer = action_Steer;
     	}
     	
 		@Override
@@ -208,27 +216,18 @@ public class NoKeyBoardActivity extends Activity {
 						sendOrderTimer.schedule(sOrderTimerTask, 0, 500);
 						break;
 					}
-					case R.id.stop_BTN:{
-						socketManager = SocketManager.getInstance();
-						Action_Emotor action_Emotor = Action_Emotor.getInstance();
-						action_Emotor.reset();
-						try {
-	                        socketManager.sendOrder(action_Emotor.getOrder());
-                        } catch (JSONException e) {
-	                        e.printStackTrace();
-                        }
-						break;
-					}
 					case R.id.speedDOWN_BTN: {
-					    socketManager = SocketManager.getInstance();
-					    Action_Emotor action_Emotor = Action_Emotor.getInstance();
-					    action_Emotor.reduceSpeed();
-					    
-					    try {
-                            socketManager.sendOrder(action_Emotor.getOrder());
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+					    slowSpeedTimer = null;
+                        sendOrderTimer = null;
+                        
+                        slowSpeedTimer = new Timer();
+                        sendOrderTimer = new Timer();
+                        
+                        slowSpeedTimerTask sSpeedTimerTask = new slowSpeedTimerTask();
+                        sendOrderTimerTask sOrderTimerTask = new sendOrderTimerTask();
+                        
+                        slowSpeedTimer.schedule(sSpeedTimerTask, 0, 50);
+                        sendOrderTimer.schedule(sOrderTimerTask, 0, 500);
 					    break;
 					}
 					
@@ -280,7 +279,16 @@ public class NoKeyBoardActivity extends Activity {
                         }
 						break;
 					}
-					
+					case R.id.camera_RESET_BTN:{
+					    Action_Steer action_Steer = Action_Steer.getInstance();
+					    action_Steer.reset();
+					    try {
+                            socketManager.sendOrder(action_Steer.getOrder());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+					    break;
+					}
 				}
 			}else if (event.getAction() == KeyEvent.ACTION_UP) {
 			    Action_Emotor.getInstance().reset();
@@ -307,10 +315,6 @@ public class NoKeyBoardActivity extends Activity {
 	                        addspeedTimer.cancel();
                         }
 						addspeedTimer = null;
-						break;
-					}
-					case R.id.stop_BTN:{
-						
 						break;
 					}
 					
@@ -474,7 +478,6 @@ public class NoKeyBoardActivity extends Activity {
     //发送命令区域
     //--------------------------------------------------------
     private Timer slowSpeedTimer = new Timer();
-    @SuppressWarnings("unused")
     private class slowSpeedTimerTask extends TimerTask{
     	@Override
 		public void run() {
@@ -503,6 +506,8 @@ public class NoKeyBoardActivity extends Activity {
     	@Override
 		public void run() {
 			Action_Emotor action_Emotor = Action_Emotor.getInstance();
+			action_Emotor.setY(50);
+			// DO nothing
     	};
     }
 	//--------------------------------------------------------
@@ -520,7 +525,6 @@ public class NoKeyBoardActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-    		
     	};
     }
 	//--------------------------------------------------------
