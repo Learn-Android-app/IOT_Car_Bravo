@@ -17,6 +17,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -66,8 +68,21 @@ public class StartActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.start, menu);
-		return true;
+	    new MenuInflater(getApplicationContext()).inflate(R.menu.start, menu);
+		MenuItem actionItem = menu.add(0, Menu.FIRST, 0, "设置");
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        return (    super.onCreateOptionsMenu(menu));
+	}
+	
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {        
+            case Menu.FIRST:{
+                Intent intent = new Intent(getApplicationContext(), SettingActivity.class);
+                startActivity(intent);
+            }
+        }
+        return true;
 	}
 	
 	private void ReadSetting(){
@@ -77,7 +92,7 @@ public class StartActivity extends Activity {
 		SettingData.CarIP = spc.getString("CarIP", "192.168.0.232");
 		SettingData.CarMainPort = spc.getInt("CarMainPort", 7890);
 		
-    	Log.e("读取的IP为:", "IP:" + SettingData.CarIP);
+    	Log.e("读取的数据：", "IP:" + SettingData.CarIP +"PORT:" + SettingData.CarMainPort);
 	}
 	
 	private Thread loadThread = new Thread(new Runnable() {

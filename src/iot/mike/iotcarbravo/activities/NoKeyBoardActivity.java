@@ -34,6 +34,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -91,14 +92,13 @@ public class NoKeyBoardActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		socketManager.setKeyBoardActivityHandler(MainctivityHandler_NoKeyBoard);
 		setContentView(R.layout.activity_nokeyboard);
-		
+		socketManager.startVideoServer();
 		initNOKeyBoardViews();
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.nokeyboard, menu);
 		return true;
 	}
 
@@ -111,10 +111,11 @@ public class NoKeyBoardActivity extends Activity {
 		startLink_TBN = (ToggleButton)findViewById(R.id.carState_TBTN);
 		startLink_TBN.setChecked(false);
 		startLink_TBN.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-            
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
+                    socketManager = SocketManager.getInstance();
+                    socketManager.startLink();
                     dialog = onCreateDialog(1);
                     dialog.show();
                 }                    
@@ -414,6 +415,7 @@ public class NoKeyBoardActivity extends Activity {
                         dialog = null;
                     }
 				    Toast.makeText(getApplicationContext(), "小车未能连接！", Toast.LENGTH_SHORT).show();
+				    startLink_TBN.setChecked(false);
 				    break;
 				}
 				
@@ -424,11 +426,14 @@ public class NoKeyBoardActivity extends Activity {
                         dialog = null;
                     }
 				    try {
+				        Action_USBCamera.getInstance().setMode(CameraMode.on);
+				        socketManager.sendOrder(Action_USBCamera.getInstance().getOrder());
                         socketManager.sendOrder(Action_List.getInstance().getOrder());
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                     videoView.playVideo();
+                    startLink_TBN.setChecked(true);
 				    break;
 				}
 				default:{
@@ -558,7 +563,6 @@ public class NoKeyBoardActivity extends Activity {
     		socketManager = SocketManager.getInstance();
     		try {
 				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
-				Log.v("Order Send", Action_Emotor.getInstance().getOrder());
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}

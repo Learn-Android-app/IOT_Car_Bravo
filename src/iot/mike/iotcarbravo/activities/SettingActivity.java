@@ -34,8 +34,7 @@ public class SettingActivity extends PreferenceActivity{
 			SharedPreferences spc = 
 					getSharedPreferences("iot.mike.activities_preferences",
 							MODE_WORLD_WRITEABLE);
-			SettingData.CarIP = spc.getString("CarIP", "192.168.135.116");
+			SettingData.CarIP = spc.getString("CarIP", "192.168.0.232");
 			SettingData.CarMainPort = spc.getInt("CarMainPort", 7890);
-	    	Log.e("读取的IP为:", "IP:" + SettingData.CarIP);
 		}
 }

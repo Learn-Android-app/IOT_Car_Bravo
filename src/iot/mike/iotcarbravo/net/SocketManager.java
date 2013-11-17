@@ -150,11 +150,9 @@ public class SocketManager {
 	                message.what = NETERROR;
 	                MainActivityHandler.sendMessage(message);
 				}
-				Message message = new Message();
-				message.what = NETERROR;
-				MainActivityHandler.sendMessage(message);
 			}
 		});
+		Log.v("Link", "Start!...");
 		startLinkThread.start();
 		return true;
 	}
@@ -193,6 +191,9 @@ public class SocketManager {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+			Message message = new Message();
+			message.what = NETERROR;
+			MainActivityHandler.sendMessage(message);
 			return false;
 		}
 	}
