@@ -281,7 +281,7 @@ public class KeyBoradActivity extends Activity {
 	
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event){
-		//中间5键,复位
+		//中间5键,刹车
 		if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
 				|| keyCode == KeyEvent.KEYCODE_NUMPAD_5) {
 			Action_Emotor.getInstance().reset();

@@ -2,6 +2,7 @@ package iot.mike.iotcarbravo.activities;
 
 import h264.com.VView;
 import iot.mike.iotcarbravo.data.Action_Emotor;
+import iot.mike.iotcarbravo.data.Action_List;
 import iot.mike.iotcarbravo.data.Action_Steer;
 import iot.mike.iotcarbravo.data.Action_USBCamera;
 import iot.mike.iotcarbravo.data.CameraMode;
@@ -20,6 +21,8 @@ import java.util.TimerTask;
 import org.json.JSONException;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -46,6 +49,8 @@ public class NoKeyBoardActivity extends Activity {
 	private Button Stop_BTN;
 	private Button Slow_BTN;
 	
+	private boolean isFront = true;
+	private Button CameraSELECT_BTN;
 	private Button CameraRESER_BTN;
 	private Button CameraUP_BTN;
 	private Button CameraDOWN_BTN;
@@ -58,6 +63,8 @@ public class NoKeyBoardActivity extends Activity {
 	private static VView videoView;
 	
 	private SocketManager socketManager = SocketManager.getInstance();
+	
+	private Dialog dialog; 
 	
 	private Thread initNOKeyBoardThread = new Thread(new Runnable() {
 		@Override
@@ -84,6 +91,7 @@ public class NoKeyBoardActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		socketManager.setKeyBoardActivityHandler(MainctivityHandler_NoKeyBoard);
 		setContentView(R.layout.activity_nokeyboard);
+		
 		initNOKeyBoardViews();
 	}
 
@@ -107,25 +115,9 @@ public class NoKeyBoardActivity extends Activity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    Action_USBCamera action_USBCamera = Action_USBCamera.getInstance();
-                    action_USBCamera.setMode(CameraMode.on);
-                    
-                    socketManager = SocketManager.getInstance();
-                    if (socketManager.startLink()){
-                        try {
-                            socketManager.sendOrder(action_USBCamera.getOrder());
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        socketManager.startVideoServer();
-                        videoView.playVideo();
-                        Toast.makeText(getApplicationContext(), "小车连接成功！", Toast.LENGTH_LONG).show();
-                    }else {
-                        Toast.makeText(getApplicationContext(), "小车连接失败！", Toast.LENGTH_LONG).show();
-                    }
-                }else {
-                   
-                }
+                    dialog = onCreateDialog(1);
+                    dialog.show();
+                }                    
             }
         });
 		
@@ -173,6 +165,12 @@ public class NoKeyBoardActivity extends Activity {
 		CameraUP_BTN.setOnTouchListener(new MyOnTouchListener(socketManager,
 				Action_Emotor.getInstance(), 
 				Action_Steer.getInstance()));
+		
+		CameraSELECT_BTN = (Button)findViewById(R.id.camera_SELECT_BTN);
+		CameraSELECT_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
+		        Action_Emotor.getInstance(), 
+		        Action_Steer.getInstance()));
+		
 	}
 	
 	private class MyOnTouchListener implements OnTouchListener{
@@ -289,6 +287,20 @@ public class NoKeyBoardActivity extends Activity {
                         }
 					    break;
 					}
+					case R.id.camera_SELECT_BTN:{
+					    if (isFront) {
+                            Action_USBCamera action_USBCamera =
+                                    Action_USBCamera.getInstance();
+                            action_USBCamera.setMode(CameraMode.off);
+                            
+                            try {
+                                socketManager.sendOrder(action_USBCamera.getOrder());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+					    break;
+					}
 				}
 			}else if (event.getAction() == KeyEvent.ACTION_UP) {
 			    Action_Emotor.getInstance().reset();
@@ -393,6 +405,31 @@ public class NoKeyBoardActivity extends Activity {
 				
 				case ResultType.ReadyOK:{
 					break;
+				}
+				
+				case SocketManager.NETERROR:{
+				    if (dialog != null) {
+                        dialog.dismiss();
+                        dialog.cancel();
+                        dialog = null;
+                    }
+				    Toast.makeText(getApplicationContext(), "小车未能连接！", Toast.LENGTH_SHORT).show();
+				    break;
+				}
+				
+				case SocketManager.NETOK:{
+				    if (dialog != null) {
+                        dialog.dismiss();
+                        dialog.cancel();
+                        dialog = null;
+                    }
+				    try {
+                        socketManager.sendOrder(Action_List.getInstance().getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    videoView.playVideo();
+				    break;
 				}
 				default:{
 					
@@ -528,4 +565,19 @@ public class NoKeyBoardActivity extends Activity {
     	};
     }
 	//--------------------------------------------------------
+    
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            default: {         //有标题栏的进度对话框
+                ProgressDialog dialog = new ProgressDialog(this);
+                dialog.setTitle("正在连接.....");
+                dialog.setMessage("Please wait for a few seconds...");
+                dialog.setIndeterminate(true);
+                dialog.setCancelable(true);
+                dialog.setCanceledOnTouchOutside(false);
+                return dialog;
+            }
+        }
+    }
 }

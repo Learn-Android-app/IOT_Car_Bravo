@@ -15,9 +15,13 @@ import java.net.UnknownHostException;
 import org.json.JSONException;
 
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 public class SocketManager {
+    public static final int NETOK = 99999;
+    public static final int NETERROR = -99999;
+    
 	private SocketManager(){
 		try {
 			videoSocket = new ServerSocket(11530);
@@ -124,19 +128,31 @@ public class SocketManager {
 									MainActivityHandler));
 					readFromCarThread.start();
 					NetUtil.sendList(writer);
+					Message message = new Message();
+					message.what = NETOK;
+					MainActivityHandler.sendMessage(message);
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
 					try {MainSocket.close();} 
 					catch (Exception e2) 
 					{e.printStackTrace();}
 					MainSocket = null;
+					Message message = new Message();
+	                message.what = NETERROR;
+	                MainActivityHandler.sendMessage(message);
 				} catch (IOException e) {
 					e.printStackTrace();
 					try {MainSocket.close();} 
 					catch (Exception e2) 
 					{e.printStackTrace();}
 					MainSocket = null;
+					Message message = new Message();
+	                message.what = NETERROR;
+	                MainActivityHandler.sendMessage(message);
 				}
+				Message message = new Message();
+				message.what = NETERROR;
+				MainActivityHandler.sendMessage(message);
 			}
 		});
 		startLinkThread.start();
