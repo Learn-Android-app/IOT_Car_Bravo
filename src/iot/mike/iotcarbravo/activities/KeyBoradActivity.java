@@ -40,7 +40,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -436,7 +435,28 @@ public class KeyBoradActivity extends Activity {
 		CameraRESER_BTN.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                
+                Action_OKCamera action_OKCamera = Action_OKCamera.getInstance();
+                Action_USBCamera action_USBCamera = Action_USBCamera.getInstance();
+                if (action_USBCamera.getMode() == CameraMode.on) {
+                    action_OKCamera.setMode(CameraMode.on);
+                    action_USBCamera.setMode(CameraMode.off);
+                }else {
+                    action_OKCamera.setMode(CameraMode.off);
+                    action_USBCamera.setMode(CameraMode.on);
+                }
+                try {
+                    socketManager.sendOrder(action_OKCamera.getOrder());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    socketManager.sendOrder(action_USBCamera.getOrder());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Toast.makeText(getApplicationContext(), 
+                        "切换摄像头成功！", 
+                        Toast.LENGTH_SHORT).show();
             }
         });
 		videoView = (VView)findViewById(R.id.video_VV);
