@@ -7,7 +7,6 @@ import iot.mike.iotcarbravo.data.Result_OKCamera;
 import iot.mike.iotcarbravo.data.Result_USBCamera;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 
 import org.json.JSONException;
 
@@ -42,6 +41,7 @@ public class ReadFromCarRunnable implements Runnable {
 				if (inputData.length() !=0) {
 					try {
 						int type = NetUtil.confirmType(inputData);
+						Log.v("收到的指令", inputData);
 						//处理命令
 						dealJsonOrder(inputData, type);
 					} catch (JSONException e) {
@@ -113,5 +113,4 @@ public class ReadFromCarRunnable implements Runnable {
 			}
 		}
 	}
-
 }

@@ -190,8 +190,8 @@ public class SocketManager {
 				return false;
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
-			Message message = new Message();
+		    Log.e("SocketManager", "连接断！");
+		    Message message = new Message();
 			message.what = NETERROR;
 			MainActivityHandler.sendMessage(message);
 			return false;

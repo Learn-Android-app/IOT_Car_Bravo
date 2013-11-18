@@ -2,6 +2,7 @@ package iot.mike.iotcarbravo.activities;
 
 import h264.com.VView;
 import iot.mike.iotcarbravo.data.Action_Emotor;
+import iot.mike.iotcarbravo.data.Action_OKCamera;
 import iot.mike.iotcarbravo.data.Action_Steer;
 import iot.mike.iotcarbravo.data.Action_USBCamera;
 import iot.mike.iotcarbravo.data.CameraMode;
@@ -34,35 +35,31 @@ import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 /**
  * 使用键盘和头盔跟踪模块的活动
+ * 
  * @author mikecoder
  * @date 2013-08-06
  */
 public class KeyBoradActivity extends Activity {
-	private SocketManager socketManager = SocketManager.getInstance();
+	private SocketManager  socketManager = SocketManager.getInstance();
 	
-	private Dialog dialog;	
+	private Dialog         dialog;	
+	
+	private ToggleButton   CarSTATE_BTN;
+	private Button         CameraRESER_BTN;
 	
 	private OfflineMapView mapView;
-	private static VView videoView;
-	
-	private Thread initKeyBoardThread = new Thread(new Runnable() {
-		@Override
-		public void run() {
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			Message message = new Message();
-			message.what = ResultType.ReadyOK;
-			MainctivityHandler_KeyBoard.sendMessage(message);
-		}
-	});
+	private static VView   videoView;
 	
 	private SensorManager sensorMgr;	// 感应器管理器
 	private Sensor G_sensor, O_sensor;	// 得到方向感应器
@@ -71,8 +68,8 @@ public class KeyBoradActivity extends Activity {
 	private float degree = 0;
 	private float X_Degree, Y_Degree;	//两个值
 	
-	private volatile static float pre_direction = 0;
-	private volatile static float current_direction = 0;
+	private volatile static float  pre_direction        = 0;
+	private volatile static float  current_direction    = 0;
 	
 	private volatile float Ctrl_X = 0;	
 	private volatile float Ctrl_Y = 0; 
@@ -99,12 +96,6 @@ public class KeyBoradActivity extends Activity {
 		@Override
 		public void run() {
 			Action_Emotor.getInstance().addTurn();
-			try {
-				socketManager.sendOrder(Action_Emotor.
-						getInstance().getOrder());
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
 		}
 		
 	}
@@ -129,14 +120,7 @@ public class KeyBoradActivity extends Activity {
 		@Override
 		public void run() {
 			Action_Emotor.getInstance().reduceTurn();
-			try {
-				socketManager.sendOrder(Action_Emotor.
-						getInstance().getOrder());
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
 		}
-	
 	}
 	
 	@Override
@@ -162,8 +146,7 @@ public class KeyBoradActivity extends Activity {
 		if (SettingData.CtrlMode == SettingData.KeyBoard) {
 			setContentView(R.layout.activity_keyboard);
 			initKeyBoardViews();
-			socketManager.setKeyBoardActivityHandler(
-					MainctivityHandler_KeyBoard);
+			socketManager.setKeyBoardActivityHandler(MainctivityHandler_KeyBoard);
 		}else {
 			Intent intent = new Intent(getApplicationContext(),
 					NoKeyBoardActivity.class);
@@ -177,7 +160,6 @@ public class KeyBoradActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.keyboard, menu);
 		return true;
 	}
 	
@@ -185,21 +167,15 @@ public class KeyBoradActivity extends Activity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		Log.e(keyCode + ":", event.toString());
-		TextView textView = (TextView)findViewById(R.id.textView1);
 		
-		try {
-			textView.setText(event.toString() + "\n" +
-					Action_Emotor.getInstance().getOrder());
-		} catch (JSONException e1) {
-			e1.printStackTrace();
-		}
 		//中间5键,复位
 		if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
 				|| keyCode == KeyEvent.KEYCODE_NUMPAD_5) {
-			Action_Emotor.getInstance().reset();
+		    
+		    pre_direction = current_direction;    //指向正前方
+            
 			Action_Steer.getInstance().reset();
 			try {
-				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
 				socketManager.sendOrder(Action_Steer.getInstance().getOrder());
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -246,7 +222,26 @@ public class KeyBoradActivity extends Activity {
 			addTurnTimer.schedule(new addTurnTimerTask(), 0, 500);
 		}
 		
-		if (SettingData.CtrlMode== SettingData.KeyBoard){
+		//切换视频 除号键
+		if (keyCode == KeyEvent.KEYCODE_NUMPAD_DIVIDE) {
+            if(Action_USBCamera.getInstance().getMode() == CameraMode.off) {
+                Action_USBCamera.getInstance().setMode(CameraMode.on);
+                Action_OKCamera.getInstance().setMode(CameraMode.off);
+                try {
+                    socketManager.sendOrder(Action_OKCamera.getInstance().getOrder());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    socketManager.sendOrder(Action_USBCamera.getInstance().getOrder());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+		
+		
+		if (SettingData.CtrlMode == SettingData.KeyBoard){
 			if (keyCode == KeyEvent.KEYCODE_NUMPAD_DIVIDE 
 					|| keyCode == KeyEvent.KEYCODE_MENU) {
 				Toast.makeText(getApplicationContext(), 
@@ -254,9 +249,6 @@ public class KeyBoradActivity extends Activity {
 				
 				pre_direction = current_direction;
 				
-				Toast.makeText(getApplicationContext(), 
-						pre_direction + ":" + current_direction, 
-						Toast.LENGTH_LONG).show();
 				Action_Steer action_Steer = Action_Steer.getInstance();
 				action_Steer.setA(0);action_Steer.setB(0);
 				Action_USBCamera action_USBCamera = Action_USBCamera.
@@ -268,12 +260,6 @@ public class KeyBoradActivity extends Activity {
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
-			}
-			if (keyCode == KeyEvent.KEYCODE_BACK) {
-				socketManager.startLink();
-				Message message = new Message();
-				message.what = ResultType.StartLink;
-				MainctivityHandler_KeyBoard.sendMessage(message);
 			}
 		}
 		return true;
@@ -326,12 +312,6 @@ public class KeyBoradActivity extends Activity {
 				reduceTurnTimer.cancel();
 				reduceTurnTimer = null;
 			}
-			Action_Emotor.getInstance().reset();
-			try {
-				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
 		}
 		//右键,右拐
 		if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
@@ -339,12 +319,6 @@ public class KeyBoradActivity extends Activity {
 			if (addTurnTimer != null) {
 				addTurnTimer.cancel();
 				addTurnTimer = null;
-			}
-			Action_Emotor.getInstance().reset();
-			try {
-				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
-			} catch (JSONException e) {
-				e.printStackTrace();
 			}
 		}
 		return false;
@@ -394,9 +368,6 @@ public class KeyBoradActivity extends Activity {
 				}
 				
 				case ResultType.StartLink:{
-					createGravitySensor();
-					createMagneticSensor();
-					socketManager.sendOrder(NetUtil.GPS_SETTING);
 					break;
 				}
 				
@@ -409,6 +380,33 @@ public class KeyBoradActivity extends Activity {
 					videoView.playVideo();
 					break;
 				}
+				case SocketManager.NETOK:{
+				    if (dialog != null) {
+                        dialog.dismiss();
+                        dialog.cancel();
+                        dialog = null;
+                    }
+                    videoView.playVideo();
+                    createGravitySensor();
+                    createMagneticSensor();
+                    socketManager.sendOrder(NetUtil.GPS_SETTING);
+                    CarSTATE_BTN.setChecked(true);
+                    break;
+				}
+				case SocketManager.NETERROR:{
+				    if (dialog != null) {
+                        dialog.dismiss();
+                        dialog.cancel();
+                        dialog = null;
+                    }
+				    Toast.makeText(getApplicationContext(), 
+				            "小车未连接...", 
+				            Toast.LENGTH_SHORT).show();
+				    CarSTATE_BTN.setChecked(false);
+				    G_sensor = null;
+				    O_sensor = null;
+				    sensorMgr = null;
+				}
 				default:{
 					
 					break;
@@ -418,9 +416,29 @@ public class KeyBoradActivity extends Activity {
 	};
 	
 	private void initKeyBoardViews(){
-		dialog = onCreateDialog(2);
-		dialog.show();
-		initKeyBoardThread.start();
+		CarSTATE_BTN = (ToggleButton)findViewById(R.id.CarSTATE_TBTN);
+		CarSTATE_BTN.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    socketManager = SocketManager.getInstance();
+                    socketManager.startLink();
+                    dialog = onCreateDialog(1);
+                    dialog.show();
+                }else {
+                    buttonView.setChecked(true);
+                    return;
+                }
+            }
+        });
+		
+		CameraRESER_BTN = (Button)findViewById(R.id.CameraRESET_BTN);
+		CameraRESER_BTN.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                
+            }
+        });
 		videoView = (VView)findViewById(R.id.video_VV);
 		mapView = (OfflineMapView)findViewById(R.id.offlineMap_MAP);
 		mapView.setLocation(120.638696551304, 31.304066035848, 18, 0, 0);
@@ -537,8 +555,8 @@ public class KeyBoradActivity extends Activity {
         switch (id) {
             default: {         //有标题栏的进度对话框
                 ProgressDialog dialog = new ProgressDialog(this);
-                dialog.setTitle("正在初始化.....");
-                dialog.setMessage("Please wait while loading...");
+                dialog.setTitle("正在连接.....");
+                dialog.setMessage("Please wait a few seconds...");
                 dialog.setIndeterminate(true);
                 dialog.setCancelable(true);
                 dialog.setCanceledOnTouchOutside(false);

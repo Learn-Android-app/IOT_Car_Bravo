@@ -68,7 +68,6 @@ public class StartActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-	    new MenuInflater(getApplicationContext()).inflate(R.menu.start, menu);
 		MenuItem actionItem = menu.add(0, Menu.FIRST, 0, "设置");
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         return (    super.onCreateOptionsMenu(menu));
@@ -87,10 +86,10 @@ public class StartActivity extends Activity {
 	
 	private void ReadSetting(){
 		SharedPreferences spc = 
-				getSharedPreferences("iot.mike.activities_preferences",
+				getSharedPreferences("iot.mike.iotcarbravo.activities_preferences",
 						MODE_WORLD_WRITEABLE);
 		SettingData.CarIP = spc.getString("CarIP", "192.168.0.232");
-		SettingData.CarMainPort = spc.getInt("CarMainPort", 7890);
+		SettingData.CarMainPort = Integer.valueOf(spc.getString("CarMainPort", "7890"));
 		
     	Log.e("读取的数据：", "IP:" + SettingData.CarIP +"PORT:" + SettingData.CarMainPort);
 	}

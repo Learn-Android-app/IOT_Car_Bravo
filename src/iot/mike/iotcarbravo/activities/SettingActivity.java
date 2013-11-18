@@ -30,11 +30,11 @@ public class SettingActivity extends PreferenceActivity{
 	  }
 	
 	  public void updateData(){
-			Log.e(SettingData.CarIP, SettingData.CarIP);
 			SharedPreferences spc = 
-					getSharedPreferences("iot.mike.activities_preferences",
+					getSharedPreferences("iot.mike.iotcarbravo.activities_preferences",
 							MODE_WORLD_WRITEABLE);
-			SettingData.CarIP = spc.getString("CarIP", "192.168.0.232");
-			SettingData.CarMainPort = spc.getInt("CarMainPort", 7890);
+			SettingData.CarIP = spc.getString("CarIP", "");
+			SettingData.CarMainPort = Integer.valueOf(spc.getString("CarMainPort", "7890"));
+			Log.v("设置界面读取的数据是:", SettingData.CarIP + ":" + SettingData.CarMainPort);
 		}
 }

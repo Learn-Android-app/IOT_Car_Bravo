@@ -32,10 +32,8 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -45,10 +43,17 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+/**
+ * 未使用外界键盘的界面
+ * 
+ * @author mike
+ * @date 2013-11-18
+ */
 public class NoKeyBoardActivity extends Activity {
 	private Button SpeedUP_BTN;
 	private Button SpeedAVG_BTN;
-	private Button Stop_BTN;
+	@SuppressWarnings("unused")
+    private Button Stop_BTN;
 	private Button Slow_BTN;
 	
 	private boolean isFront = true;
@@ -99,7 +104,6 @@ public class NoKeyBoardActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
 		return true;
 	}
 
@@ -126,6 +130,7 @@ public class NoKeyBoardActivity extends Activity {
 		videoView = (VView)findViewById(R.id.videoView);
 		
 		mapView = (OfflineMapView)findViewById(R.id.mapView);
+		mapView.setLocation(120.638696551304, 31.304066035848, 18, 0, 0);
 		SpeedAVG_BTN = (Button)findViewById(R.id.speedAVG_BTN);
 		SpeedAVG_BTN.setOnTouchListener(new MyOnTouchListener(socketManager, 
 				Action_Emotor.getInstance(), 

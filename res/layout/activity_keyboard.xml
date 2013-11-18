@@ -28,13 +28,32 @@
         android:layout_alignParentLeft="true"
         android:src="@drawable/bg" />
 
-    <TextView
-        android:id="@+id/textView1"
+    <ToggleButton
+        android:id="@+id/CarSTATE_TBTN"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:text="Medium Text"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:text="小车状态" />
+
+    <Button
+        android:id="@+id/CameraRESET_BTN"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/offlineMap_MAP"
+        android:layout_alignTop="@+id/CarSTATE_TBTN"
+        android:layout_toRightOf="@+id/CarSTATE_TBTN"
+        android:text="摄像头标定" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/CarSTATE_TBTN"
+        android:layout_below="@+id/CarSTATE_TBTN"
+        android:layout_toLeftOf="@+id/CameraRESET_BTN"
+        android:text="小车状态"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textSize="14dp" />
 
 </RelativeLayout>
