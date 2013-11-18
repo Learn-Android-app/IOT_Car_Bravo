@@ -3,6 +3,7 @@ package iot.mike.iotcarbravo.activities;
 import h264.com.VView;
 import iot.mike.iotcarbravo.data.Action_Emotor;
 import iot.mike.iotcarbravo.data.Action_List;
+import iot.mike.iotcarbravo.data.Action_OKCamera;
 import iot.mike.iotcarbravo.data.Action_Steer;
 import iot.mike.iotcarbravo.data.Action_USBCamera;
 import iot.mike.iotcarbravo.data.CameraMode;
@@ -294,11 +295,42 @@ public class NoKeyBoardActivity extends Activity {
                                     Action_USBCamera.getInstance();
                             action_USBCamera.setMode(CameraMode.off);
                             
+                            Action_OKCamera action_OKCamera =
+                                    Action_OKCamera.getInstance();
+                            action_OKCamera.setMode(CameraMode.on);
+                            
                             try {
                                 socketManager.sendOrder(action_USBCamera.getOrder());
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
+                            try {
+                                socketManager.sendOrder(action_OKCamera.getOrder());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            isFront = false;
+                        }else {
+                            Action_USBCamera action_USBCamera =
+                                    Action_USBCamera.getInstance();
+                            action_USBCamera.setMode(CameraMode.on);
+                            
+                            Action_OKCamera action_OKCamera =
+                                    Action_OKCamera.getInstance();
+                            action_OKCamera.setMode(CameraMode.off);
+                            
+                            try {
+                                socketManager.sendOrder(action_OKCamera.getOrder());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            try {
+                                socketManager.sendOrder(action_USBCamera.getOrder());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            isFront = false;
+                            isFront = true;
                         }
 					    break;
 					}
