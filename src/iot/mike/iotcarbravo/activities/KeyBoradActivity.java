@@ -6,6 +6,7 @@ import iot.mike.iotcarbravo.data.Action_OKCamera;
 import iot.mike.iotcarbravo.data.Action_Steer;
 import iot.mike.iotcarbravo.data.Action_USBCamera;
 import iot.mike.iotcarbravo.data.CameraMode;
+import iot.mike.iotcarbravo.data.Control_GPS;
 import iot.mike.iotcarbravo.data.ResultType;
 import iot.mike.iotcarbravo.data.Result_GPS;
 import iot.mike.iotcarbravo.data.Result_List;
@@ -54,14 +55,14 @@ public class KeyBoradActivity extends Activity {
 	
 	private Dialog         dialog;	
 	
-	private ToggleButton   CarSTATE_BTN;
+	private ToggleButton   CarSTATE_TBTN;
 	private Button         CameraRESER_BTN;
 	
 	private OfflineMapView mapView;
-	private static VView   videoView;
+	private VView   videoView;
 	
 	private SensorManager sensorMgr;	// 感应器管理器
-	private Sensor G_sensor, O_sensor;	// 得到方向感应器
+	private Sensor G_sensor, M_sensor;	// 得到方向感应器
 	private float gx, gy, gz, ox;		// 定义各坐标轴上的重力加速度
 	
 	private float degree = 0;
@@ -122,6 +123,57 @@ public class KeyBoradActivity extends Activity {
 		}
 	}
 	
+	private class GListener implements SensorEventListener {
+        public void onSensorChanged(SensorEvent e) {
+            // 得到各轴上的重力加速度
+            gx = e.values[SensorManager.DATA_X];
+            gy = e.values[SensorManager.DATA_Y];
+            gz = e.values[SensorManager.DATA_Z];
+            dealDegree();
+        }
+        public void onAccuracyChanged(Sensor s, int accuracy) {}
+	}
+	
+	private class MListener implements SensorEventListener {
+        // 实现接口的方法
+        public void onSensorChanged(SensorEvent event) {
+             //右正左负
+             if (event.sensor.getType() == Sensor.TYPE_ORIENTATION){
+                 ox = event.values[SensorManager.DATA_X];
+                 current_direction = ox;
+                 if(pre_direction < 180){    //这个初始角的位置小于180度
+                     if(ox > (pre_direction + 180) 
+                             || ox < pre_direction){ 
+                         //现在这个角度在pre_direction的左侧
+                         if(ox >= pre_direction) //这个角度是没有过0度
+                             degree = -(360 - ox + pre_direction);
+                         else degree = -(pre_direction - ox); 
+                         //是过了0度，在pre_direction和0之间
+                     }else { //在pre_direction的右侧
+                         degree = ox - pre_direction;
+                     }
+                 }else { //这个初始角的位置大于180度
+                     if(ox > pre_direction - 180 
+                             && ox < pre_direction){ 
+                         //现在这个角度在pre_direction的左侧
+                             degree = -(pre_direction - ox);
+                     }else { //在pre_direction的右侧
+                         if (ox >= pre_direction) 
+                             //这个角度在pre_direction和0之间
+                                 degree = ox - pre_direction;
+                         else degree = 360 + ox - pre_direction; 
+                         //这个角过了0度
+                     }
+                 }
+                 Ctrl_X = degree;
+             }
+         }
+        public void onAccuracyChanged(Sensor s, int accuracy) {}
+	}
+	
+	private GListener gListener    = null;
+	private MListener mListener    = null;
+	
 	@Override
 	public void onDestroy() {
 		try {
@@ -137,6 +189,21 @@ public class KeyBoradActivity extends Activity {
 		}
 		
 	}
+	
+	//GPS信息
+    private Control_GPS control_GPS = new Control_GPS();
+    private Timer gPSDataTimer;
+    private GPSTask gpsTask;
+    private class GPSTask extends TimerTask {
+        @Override
+        public void run() {
+            try{
+                socketManager.sendOrder(control_GPS.getOrder());
+            } catch(Exception e) {
+                
+            }
+        }
+    };
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -179,6 +246,7 @@ public class KeyBoradActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
+			return true;
 		}
 		//上键,加速
 		if (keyCode == KeyEvent.KEYCODE_DPAD_UP
@@ -189,6 +257,7 @@ public class KeyBoradActivity extends Activity {
 			}
 			addSpeedTimer = new Timer();
 			addSpeedTimer.schedule(new addSpeedTimerTask(), 0, 500);
+			return true;
 		}
 		//下键,减速
 		if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN
@@ -199,6 +268,7 @@ public class KeyBoradActivity extends Activity {
 			}
 			reduceSpeedTimer = new Timer();
 			reduceSpeedTimer.schedule(new reduceSpeedTimerTask(), 0, 500);
+			return true;
 		}
 		//左键,左拐
 		if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT
@@ -209,6 +279,7 @@ public class KeyBoradActivity extends Activity {
 			}
 			reduceTurnTimer = new Timer();
 			reduceTurnTimer.schedule(new reduceTurnTimerTask(), 0, 500);
+			return true;
 		}
 		//右键,右拐
 		if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
@@ -219,6 +290,7 @@ public class KeyBoradActivity extends Activity {
 			}
 			addTurnTimer = new Timer();
 			addTurnTimer.schedule(new addTurnTimerTask(), 0, 500);
+			return true;
 		}
 		
 		//切换视频 除号键
@@ -237,31 +309,25 @@ public class KeyBoradActivity extends Activity {
                     e.printStackTrace();
                 }
             }
+            return true;
         }
 		
-		
-		if (SettingData.CtrlMode == SettingData.KeyBoard){
-			if (keyCode == KeyEvent.KEYCODE_NUMPAD_DIVIDE 
-					|| keyCode == KeyEvent.KEYCODE_MENU) {
-				Toast.makeText(getApplicationContext(), 
-						"复位", Toast.LENGTH_SHORT).show();
+		// 摄像头复位 菜单建
+		if (keyCode == KeyEvent.KEYCODE_MENU) {
+		    Toast.makeText(getApplicationContext(), 
+		            "复位", Toast.LENGTH_SHORT).show();
 				
-				pre_direction = current_direction;
-				
-				Action_Steer action_Steer = Action_Steer.getInstance();
-				action_Steer.setA(0);action_Steer.setB(0);
-				Action_USBCamera action_USBCamera = Action_USBCamera.
-						getInstance();
-				action_USBCamera.setMode(CameraMode.on);
-				try {
-					socketManager.sendOrder(action_USBCamera.getOrder());
-					socketManager.sendOrder(action_Steer.getOrder());
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			}
+		    pre_direction = current_direction;
+		    
+		    Action_Steer action_Steer = Action_Steer.getInstance();
+		    action_Steer.setA(0);action_Steer.setB(0);
+		    try {
+		        socketManager.sendOrder(action_Steer.getOrder());
+		    } catch (JSONException e) {
+		        e.printStackTrace();
+		    }
 		}
-		return true;
+		return super.onKeyDown(keyCode, event);
 	}
 	
 	@Override
@@ -275,6 +341,7 @@ public class KeyBoradActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
+			return true;
 		}
 		//上键,加速
 		if (keyCode == KeyEvent.KEYCODE_DPAD_UP
@@ -289,6 +356,7 @@ public class KeyBoradActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
+			return true;
 		}
 		//下键,减速
 		if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN
@@ -303,6 +371,7 @@ public class KeyBoradActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
+			return true;
 		}
 		//左键,左拐
 		if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT
@@ -311,6 +380,7 @@ public class KeyBoradActivity extends Activity {
 				reduceTurnTimer.cancel();
 				reduceTurnTimer = null;
 			}
+			return true;
 		}
 		//右键,右拐
 		if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
@@ -319,8 +389,9 @@ public class KeyBoradActivity extends Activity {
 				addTurnTimer.cancel();
 				addTurnTimer = null;
 			}
+			return true;
 		}
-		return false;
+		return super.onKeyUp(keyCode, event);
 	}	
 	
 	private Handler MainctivityHandler_KeyBoard = new Handler(){
@@ -380,34 +451,57 @@ public class KeyBoradActivity extends Activity {
 					break;
 				}
 				case SocketManager.NETOK:{
+				    socketManager.startVideoServer();
 				    if (dialog != null) {
                         dialog.dismiss();
                         dialog.cancel();
                         dialog = null;
                     }
+				    sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
                     videoView.playVideo();
                     createGravitySensor();
                     createMagneticSensor();
                     socketManager.sendOrder(NetUtil.GPS_SETTING);
-                    CarSTATE_BTN.setChecked(true);
+                    
+                    CarSTATE_TBTN.setChecked(true);
+                    CarSTATE_TBTN.setEnabled(false);
+                    
+                    if (gPSDataTimer != null) {
+                        gPSDataTimer.cancel();
+                    }
+                    gPSDataTimer = new Timer();
+                    gpsTask = null;
+                    gpsTask = new GPSTask();
+                    gPSDataTimer.schedule(gpsTask, 50, 500);
                     break;
 				}
 				case SocketManager.NETERROR:{
+				    Log.e("SocketManager", "Net Error");
 				    if (dialog != null) {
                         dialog.dismiss();
                         dialog.cancel();
                         dialog = null;
                     }
+				    CarSTATE_TBTN.setChecked(false);
+				    CarSTATE_TBTN.setEnabled(true);
+				    if (gListener != null) {
+				        sensorMgr.unregisterListener(gListener);
+                    }
+				    if (mListener != null) {
+				        sensorMgr.unregisterListener(mListener);
+                    }
+				    gListener = null;
+				    mListener = null;
+                    G_sensor = null;
+                    M_sensor = null;
+                    sensorMgr = null;
 				    Toast.makeText(getApplicationContext(), 
 				            "小车未连接...", 
 				            Toast.LENGTH_SHORT).show();
-				    CarSTATE_BTN.setChecked(false);
-				    G_sensor = null;
-				    O_sensor = null;
-				    sensorMgr = null;
+				    socketManager.startVideoServer();
 				}
+				
 				default:{
-					
 					break;
 				}
 			}
@@ -415,8 +509,8 @@ public class KeyBoradActivity extends Activity {
 	};
 	
 	private void initKeyBoardViews(){
-		CarSTATE_BTN = (ToggleButton)findViewById(R.id.CarSTATE_TBTN);
-		CarSTATE_BTN.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+	    CarSTATE_TBTN = (ToggleButton)findViewById(R.id.CarSTATE_TBTN);
+	    CarSTATE_TBTN.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
@@ -424,9 +518,6 @@ public class KeyBoradActivity extends Activity {
                     socketManager.startLink();
                     dialog = onCreateDialog(1);
                     dialog.show();
-                }else {
-                    buttonView.setChecked(true);
-                    return;
                 }
             }
         });
@@ -464,74 +555,34 @@ public class KeyBoradActivity extends Activity {
 		mapView.setLocation(120.638696551304, 31.304066035848, 18, 0, 0);
 	}
 	
-	@SuppressWarnings("deprecation")
 	private void createGravitySensor(){
-		 // 得到当前手机传感器管理对象
-       sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
        // 加速重力感应对象
        G_sensor = sensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
        // 实例化一个监听器
-       SensorEventListener lsn = new SensorEventListener() {
-           // 实现接口的方法
-		public void onSensorChanged(SensorEvent e) {
-               // 得到各轴上的重力加速度
-               gx = e.values[SensorManager.DATA_X];
-               gy = e.values[SensorManager.DATA_Y];
-               gz = e.values[SensorManager.DATA_Z];
-               dealDegree();
-           }
-           public void onAccuracyChanged(Sensor s, int accuracy) {}
-       };
+       if (gListener != null) {
+           gListener = null;
+       }
+       gListener = new GListener();
        // 注册listener，第三个参数是检测的精确度
-       sensorMgr.registerListener(lsn, G_sensor, 
+       sensorMgr.registerListener(gListener, 
+               G_sensor, 
     		   SensorManager.SENSOR_DELAY_UI);
 	}
+	
+	
 	@SuppressWarnings("deprecation")
 	private void createMagneticSensor(){
-		// 得到当前手机传感器管理对象
-       sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
        // 加速方向感应对象
-       O_sensor = sensorMgr.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+       M_sensor = sensorMgr.getDefaultSensor(Sensor.TYPE_ORIENTATION);
        // 实例化一个监听器
-       SensorEventListener lsn = new SensorEventListener() {
-           // 实现接口的方法
-           public void onSensorChanged(SensorEvent event) {
-	       		//右正左负
-	       		if (event.sensor.getType() == Sensor.TYPE_ORIENTATION){
-	       			ox = event.values[SensorManager.DATA_X];
-	       			current_direction = ox;
-	       			if(pre_direction < 180){	//这个初始角的位置小于180度
-	       				if(ox > (pre_direction + 180) 
-	       						|| ox < pre_direction){	
-	       					//现在这个角度在pre_direction的左侧
-	       					if(ox >= pre_direction) //这个角度是没有过0度
-	       						degree = -(360 - ox + pre_direction);
-	       					else degree = -(pre_direction - ox); 
-	       					//是过了0度，在pre_direction和0之间
-	       				}else {	//在pre_direction的右侧
-	       					degree = ox - pre_direction;
-	       				}
-	       			}else {	//这个初始角的位置大于180度
-	       				if(ox > pre_direction - 180 
-	       						&& ox < pre_direction){	
-	       					//现在这个角度在pre_direction的左侧
-	        					degree = -(pre_direction - ox);
-	       				}else {	//在pre_direction的右侧
-	       					if (ox >= pre_direction) 
-	       						//这个角度在pre_direction和0之间
-	        						degree = ox - pre_direction;
-	       					else degree = 360 + ox - pre_direction;	
-	       					//这个角过了0度
-	       				}
-	       			}
-	       			Ctrl_X = degree;
-	       		}
-	       	}
-           public void onAccuracyChanged(Sensor s, int accuracy) {}
-       };
+       if (mListener != null) {
+        mListener = null;
+       }
+       mListener = new MListener();
        // 注册listener，第三个参数是检测的精确度
-       sensorMgr.registerListener(lsn, O_sensor, 
-    		   SensorManager.SENSOR_DELAY_UI);
+       sensorMgr.registerListener(mListener, 
+               M_sensor, 
+               SensorManager.SENSOR_DELAY_UI);
 	}
 	
 	private void dealDegree(){
@@ -559,13 +610,11 @@ public class KeyBoradActivity extends Activity {
 				action_Steer.setB((int)Ctrl_Y - 90);
 				try {
 					socketManager.sendOrder(action_Steer.getOrder());
-					
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
 			}else {
-				Toast.makeText(getApplicationContext(), 
-						"不要倾斜头部", Toast.LENGTH_LONG).show();
+				Toast.makeText(getApplicationContext(), "不要倾斜头部", Toast.LENGTH_LONG).show();
 			}
 		}
     }

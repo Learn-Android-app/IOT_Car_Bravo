@@ -7,6 +7,7 @@ import iot.mike.iotcarbravo.data.Action_OKCamera;
 import iot.mike.iotcarbravo.data.Action_Steer;
 import iot.mike.iotcarbravo.data.Action_USBCamera;
 import iot.mike.iotcarbravo.data.CameraMode;
+import iot.mike.iotcarbravo.data.Control_GPS;
 import iot.mike.iotcarbravo.data.ResultType;
 import iot.mike.iotcarbravo.data.Result_GPS;
 import iot.mike.iotcarbravo.data.Result_List;
@@ -73,20 +74,21 @@ public class NoKeyBoardActivity extends Activity {
 	
 	private Dialog dialog; 
 	
-	private Thread initNOKeyBoardThread = new Thread(new Runnable() {
-		@Override
-		public void run() {
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			Message message = new Message();
-			message.what = ResultType.ReadyOK;
-			MainctivityHandler_NoKeyBoard.sendMessage(message);
-		}
-	});
-	
+	//GPS信息
+	private Control_GPS control_GPS = new Control_GPS();
+	private Timer gPSDataTimer;
+	private GPSTask gpsTask;
+	private class GPSTask extends TimerTask {
+        @Override
+        public void run() {
+            try{
+                socketManager.sendOrder(control_GPS.getOrder());
+            } catch(Exception e) {
+                
+            }
+        }
+    };
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		if (SettingData.CtrlMode == SettingData.KeyBoard) {
@@ -109,8 +111,6 @@ public class NoKeyBoardActivity extends Activity {
 
 	
 	private void initNOKeyBoardViews(){
-		initNOKeyBoardThread.start();
-		
 		createGravitySensor();
 		
 		startLink_TBN = (ToggleButton)findViewById(R.id.carState_TBTN);
@@ -123,7 +123,7 @@ public class NoKeyBoardActivity extends Activity {
                     socketManager.startLink();
                     dialog = onCreateDialog(1);
                     dialog.show();
-                }                    
+                }
             }
         });
 		
@@ -453,6 +453,7 @@ public class NoKeyBoardActivity extends Activity {
                     }
 				    Toast.makeText(getApplicationContext(), "小车未能连接！", Toast.LENGTH_SHORT).show();
 				    startLink_TBN.setChecked(false);
+				    startLink_TBN.setEnabled(true);
 				    break;
 				}
 				
@@ -469,8 +470,17 @@ public class NoKeyBoardActivity extends Activity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    videoView.playVideo();
+				    if (gPSDataTimer != null) {
+                        gPSDataTimer.cancel();
+                    }
+				    gPSDataTimer = new Timer();
+				    gpsTask = null;
+				    gpsTask = new GPSTask();
+				    gPSDataTimer.schedule(gpsTask, 50, 500);
+				    
+				    videoView.playVideo();
                     startLink_TBN.setChecked(true);
+                    startLink_TBN.setEnabled(false);
 				    break;
 				}
 				default:{
@@ -620,5 +630,11 @@ public class NoKeyBoardActivity extends Activity {
                 return dialog;
             }
         }
+    }
+    
+    @Override
+    protected void onDestroy(){
+        socketManager = null;
+        super.onDestroy();
     }
 }

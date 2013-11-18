@@ -23,12 +23,6 @@ public class SocketManager {
     public static final int NETERROR = -99999;
     
 	private SocketManager(){
-		try {
-			videoSocket = new ServerSocket(11530);
-			Log.d("Socket Video", "Established");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	private Handler MainActivityHandler = null;
@@ -38,7 +32,7 @@ public class SocketManager {
 	private Thread readFromCarThread = null;
 	
 	private ServerSocket videoSocket = null;
-	private volatile Socket vviewSocket = null;
+	private Socket vviewSocket = null;
 	
 	private static class SocketManagerHolder{
 		public static SocketManager socketManager = new SocketManager();
@@ -52,22 +46,34 @@ public class SocketManager {
 	 * 开启视频服务器
 	 */
 	public void startVideoServer(){
-		Thread thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (true) {
-					try {
-						vviewSocket = videoSocket.accept();
-						Log.d("VideoSocket", "New Comer");
-					} catch (IOException e) {
-						e.printStackTrace();
-						vviewSocket = null;
-					}
-				}
-				
-			}
-		});
-		thread.start();
+	    if (videoSocket == null || videoSocket.isClosed()) {
+	        Thread thread = new Thread(new Runnable() {
+	            @Override
+	            public void run() {
+	                try {
+	                    videoSocket = new ServerSocket(11530);
+	                } catch (IOException e1) {
+	                    e1.printStackTrace();
+	                    return;
+	                }
+	                while (true) {
+	                    try {
+	                        vviewSocket = videoSocket.accept();
+	                        Log.d("VideoSocket", "New Comer");
+	                    } catch (IOException e) {
+	                        e.printStackTrace();
+	                        vviewSocket = null;
+	                    }
+	                }
+	                
+	            }
+	        });
+	        thread.start();
+	        return;
+        }
+	    if (videoSocket != null || !videoSocket.isClosed()) {
+            return;
+        }
 	}
 	/**
 	 * 给视频码流
@@ -131,6 +137,7 @@ public class SocketManager {
 					Message message = new Message();
 					message.what = NETOK;
 					MainActivityHandler.sendMessage(message);
+					startVideoServer();
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
 					try {MainSocket.close();} 
@@ -189,8 +196,11 @@ public class SocketManager {
 			}else {
 				return false;
 			}
-		} catch (IOException e) {
+		} catch (              Exception e) {
 		    Log.e("SocketManager", "连接断！");
+		    MainSocket = null;
+		    writer = null;
+		    reader = null;
 		    Message message = new Message();
 			message.what = NETERROR;
 			MainActivityHandler.sendMessage(message);

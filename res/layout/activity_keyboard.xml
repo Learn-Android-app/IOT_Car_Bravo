@@ -43,7 +43,7 @@
         android:layout_alignRight="@+id/offlineMap_MAP"
         android:layout_alignTop="@+id/CarSTATE_TBTN"
         android:layout_toRightOf="@+id/CarSTATE_TBTN"
-        android:text="摄像头标定" />
+        android:text="摄像头切换" />
 
     <TextView
         android:id="@+id/textView1"
