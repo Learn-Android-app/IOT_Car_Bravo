@@ -124,6 +124,7 @@ public class KeyBoradActivity extends Activity {
 	}
 	
 	private class GListener implements SensorEventListener {
+        @SuppressWarnings("deprecation")
         public void onSensorChanged(SensorEvent e) {
             // 得到各轴上的重力加速度
             gx = e.values[SensorManager.DATA_X];
@@ -136,6 +137,7 @@ public class KeyBoradActivity extends Activity {
 	
 	private class MListener implements SensorEventListener {
         // 实现接口的方法
+	    @SuppressWarnings("deprecation")
         public void onSensorChanged(SensorEvent event) {
              //右正左负
              if (event.sensor.getType() == Sensor.TYPE_ORIENTATION){
@@ -177,6 +179,10 @@ public class KeyBoradActivity extends Activity {
 	@Override
 	public void onDestroy() {
 		try {
+		    if (gPSDataTimer != null) {
+		        gPSDataTimer.cancel();
+            }
+		    gPSDataTimer = null;
 			Action_Emotor.getInstance().reset();
 			Action_Steer.getInstance().reset();
 			socketManager.sendOrder(Action_Emotor.
@@ -350,7 +356,7 @@ public class KeyBoradActivity extends Activity {
 				addSpeedTimer.cancel();
 				addSpeedTimer = null;
 			}
-			Action_Emotor.getInstance().reset();
+			Action_Emotor.getInstance().setY(0);
 			try {
 				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
 			} catch (JSONException e) {
@@ -365,7 +371,7 @@ public class KeyBoradActivity extends Activity {
 				reduceSpeedTimer.cancel();
 				reduceSpeedTimer = null;
 			}
-			Action_Emotor.getInstance().reset();
+			Action_Emotor.getInstance().setY(0);
 			try {
 				socketManager.sendOrder(Action_Emotor.getInstance().getOrder());
 			} catch (JSONException e) {
@@ -380,6 +386,7 @@ public class KeyBoradActivity extends Activity {
 				reduceTurnTimer.cancel();
 				reduceTurnTimer = null;
 			}
+			Action_Emotor.getInstance().setX(0);
 			return true;
 		}
 		//右键,右拐
@@ -389,6 +396,7 @@ public class KeyBoradActivity extends Activity {
 				addTurnTimer.cancel();
 				addTurnTimer = null;
 			}
+			Action_Emotor.getInstance().setX(0);
 			return true;
 		}
 		return super.onKeyUp(keyCode, event);
