@@ -53,7 +53,8 @@ public class OfflineMapView extends ImageView {
 	private Bitmap gintama;
 	
 	private double Speed = 0.0;
-	private double Degree = 0.0;
+	@SuppressWarnings("unused")
+    private double Degree = 0.0;
 	private double Height = 0.0;
 	
 	// 读取手机SD卡上的离线地图包
@@ -379,7 +380,15 @@ public class OfflineMapView extends ImageView {
 		return (float) Math.toDegrees(radians);
 	}
 
-	public static class MapController {
+	public PointF getStart() {
+        return start;
+    }
+
+    public void setStart(PointF start) {
+        this.start = start;
+    }
+
+    public static class MapController {
 		/**
 		 * @param 算出地图编号 
 		 * double_Long_x:为经度 double_la_y:为纬度 z:为缩放大小

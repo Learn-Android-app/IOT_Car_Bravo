@@ -17,7 +17,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -85,7 +84,8 @@ public class StartActivity extends Activity {
 	}
 	
 	private void ReadSetting(){
-		SharedPreferences spc = 
+		@SuppressWarnings("deprecation")
+        SharedPreferences spc = 
 				getSharedPreferences("iot.mike.iotcarbravo.activities_preferences",
 						MODE_WORLD_WRITEABLE);
 		SettingData.CarIP = spc.getString("CarIP", "192.168.0.232");

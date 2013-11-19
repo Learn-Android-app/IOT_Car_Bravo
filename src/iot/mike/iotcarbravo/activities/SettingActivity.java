@@ -6,8 +6,10 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.util.Log;
 
+@SuppressWarnings("deprecation")
 public class SettingActivity extends PreferenceActivity{
-	@Override
+	
+    @Override
 	public void onCreate(Bundle savedInstanceState) {
 	    	//requestWindowFeature(Window.FEATURE_NO_TITLE);
 	    	//getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);

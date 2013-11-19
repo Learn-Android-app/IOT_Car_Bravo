@@ -65,31 +65,5 @@ public class TestActivity extends Activity {
 	private Timer addSpeedTimer = null;
 	private TimerTask addSpeedTimerTask = null;
 	
-	private Timer addTurnTimer = new Timer();
-	private TimerTask addTurnTimerTask = new TimerTask() {
-		@Override
-		public void run() {
-			Action_Emotor action_Emotor = Action_Emotor.getInstance();
-			action_Emotor.addTurn();
-		}
-	};
-	
-	private Timer reduceSpeedTimer = new Timer();
-	private TimerTask reduceSpeedTimerTask = new TimerTask() {
-		@Override
-		public void run() {
-			Action_Emotor action_Emotor = Action_Emotor.getInstance();
-			action_Emotor.reduceSpeed();
-		}
-	};
-	
-	private Timer reduceTurnTimer = new Timer();
-	private TimerTask reduceTurnTimerTask = new TimerTask() {
-		@Override
-		public void run() {
-			Action_Emotor action_Emotor = Action_Emotor.getInstance();
-			action_Emotor.reduceTurn();
-		}
-	};
 	
 }

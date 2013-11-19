@@ -9,14 +9,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import android.graphics.Canvas;
-import android.graphics.Color;
-
+@SuppressWarnings("unused")
 public class GPSTest {
 	private static final File GPS_SOURCE = new File("GPS.S");
 	private static HashMap<GPSLocation, GPSLocation> gpsHashMap = new HashMap<GPSLocation, GPSLocation>();
-	private static LinkedList<Double> list = new LinkedList<Double>();
+    private static LinkedList<Double> list = new LinkedList<Double>();
 	
 	private static HashMap<GPSData, LinkedList<GPSLocation>> gpsMetadata = new HashMap<GPSData, LinkedList<GPSLocation>>();
 	

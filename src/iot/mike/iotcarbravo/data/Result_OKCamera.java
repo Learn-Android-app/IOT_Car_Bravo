@@ -29,7 +29,7 @@ public class Result_OKCamera {
 	}
 	
 	private Result_OKCamera(){
-		this.action = "okcamera";
+		this.setAction("okcamera");
 		this.param = new Param();
 	}
 	
@@ -64,5 +64,13 @@ public class Result_OKCamera {
 		}
 		return result_OKCamera;
 	}
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
 }
 

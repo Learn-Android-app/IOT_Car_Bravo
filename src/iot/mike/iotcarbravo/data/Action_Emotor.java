@@ -3,8 +3,6 @@ package iot.mike.iotcarbravo.data;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.R.xml;
-
 
 public class Action_Emotor {
 	private static class Action_EmotorHolder{

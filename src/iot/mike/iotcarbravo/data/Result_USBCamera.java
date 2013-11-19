@@ -30,7 +30,7 @@ public class Result_USBCamera {
 	}
 	
 	private Result_USBCamera(){
-		this.action = "usbcamera";
+		this.setAction("usbcamera");
 		this.param = new Param();
 	}
 	
@@ -67,5 +67,13 @@ public class Result_USBCamera {
 		}
 		return result_USBCamera;
 	}
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
 }
 

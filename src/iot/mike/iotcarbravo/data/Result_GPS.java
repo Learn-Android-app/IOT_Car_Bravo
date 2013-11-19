@@ -2,7 +2,6 @@ package iot.mike.iotcarbravo.data;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
 public class Result_GPS {
 	private String result;
@@ -10,7 +9,7 @@ public class Result_GPS {
 	
 	
 	private Result_GPS(){
-		result = "gps";
+		setResult("gps");
 		param = new Param();
 	}
 	
@@ -125,4 +124,12 @@ public class Result_GPS {
 		}
 		return result_GPS;
 	}
+
+    public String getResult() {
+        return result;
+    }
+
+    public void setResult(String result) {
+        this.result = result;
+    }
 }
