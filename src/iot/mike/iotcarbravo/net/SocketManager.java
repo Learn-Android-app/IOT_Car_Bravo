@@ -63,6 +63,7 @@ public class SocketManager {
 	                    } catch (IOException e) {
 	                        e.printStackTrace();
 	                        vviewSocket = null;
+	                        break;
 	                    }
 	                }
 	                
@@ -228,6 +229,16 @@ public class SocketManager {
         }
     }
 
+	
+	public void close() {
+        try {
+            MainSocket.close();
+            videoSocket.close();
+            SocketManagerHolder.socketManager = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 	
 	/**
 	 * 返回读取数据的流

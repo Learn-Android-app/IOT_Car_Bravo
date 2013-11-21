@@ -71,7 +71,7 @@ public class NoKeyBoardActivity extends Activity {
 	private static VView videoView;
 	
 	private SocketManager socketManager = SocketManager.getInstance();
-	
+	private Glistener glistener;
 	private Dialog dialog; 
 	
 	//GPS信息
@@ -82,7 +82,7 @@ public class NoKeyBoardActivity extends Activity {
         @Override
         public void run() {
             try{
-                socketManager.sendOrder(control_GPS.getOrder());
+                //socketManager.sendOrder(control_GPS.getOrder());
             } catch(Exception e) {
                 
             }
@@ -398,6 +398,7 @@ public class NoKeyBoardActivity extends Activity {
 	private Handler MainctivityHandler_NoKeyBoard = new Handler(){
 		@Override
 		public void handleMessage(Message message){
+		    try{
 			switch (message.what) {
 				case ResultType.Result_GPS:{
 					Result_GPS result_GPS = Result_GPS.getInstance();
@@ -488,6 +489,9 @@ public class NoKeyBoardActivity extends Activity {
 					break;
 				}
 			}
+		    }catch (Exception e) {
+		        e.printStackTrace();
+		    }
 		}
 	};
 	
@@ -505,62 +509,9 @@ public class NoKeyBoardActivity extends Activity {
         // 加速重力感应对象
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         // 实例化一个监听器
-        SensorEventListener lsn = new SensorEventListener() {
-            // 实现接口的方法
-            @SuppressWarnings("deprecation")
-            public void onSensorChanged(SensorEvent e) {
-                // 得到各轴上的重力加速度
-                x = e.values[SensorManager.DATA_X];
-                y = e.values[SensorManager.DATA_Y];
-                z = e.values[SensorManager.DATA_Z];
-                
-                //-----------------------------------------------------
-                if (z > 8 && z < 0) {//判断手机的位置是否正确
-					Toast.makeText(getApplicationContext(), "请保持手机的垂直放置", Toast.LENGTH_SHORT).show();
-					TurnD = 0;
-				}else {
-					if (y < 1 && y > -1) {//直线运动
-						TurnD = 0;
-					}else {
-						double degree = x/y;
-						if (degree < 0) {
-							isTurnLeft = true;
-							if (degree >= -1) {//偏转角大于45度(左)
-								TurnD = 100;
-							}else {
-								TurnD = (int) -(100/degree);
-								if (TurnD < 16) {//确保指令传输的正确性
-									TurnD = 16;
-								}
-							}
-						}else if (degree > 0) {
-							isTurnLeft = false;
-							if (degree <= 1) {//偏转角大于45度(右)
-								TurnD = 100;
-							}else {
-								TurnD = (int) (100/degree);
-								if (TurnD < 16) {//确保指令传输的正确性
-									TurnD = 16;
-								}
-							}
-						}
-					}
-				}
-                //判断方向
-                if (isTurnLeft) {
-					TurnD = -TurnD;
-				}
-                Action_Emotor action_Emotor = Action_Emotor.getInstance();
-                action_Emotor.setX(TurnD);
-                //Log.e(String.valueOf(TurnD), String.valueOf(isTurnLeft));
-                //----------打印值
-                //Toast.makeText(getApplicationContext(), String.valueOf(x) + ":" +String.valueOf(y) + ":" + String.valueOf(z), Toast.LENGTH_SHORT).show();
-            }
-            
-            public void onAccuracyChanged(Sensor s, int accuracy) {}
-        };
+        glistener = new Glistener();
         // 注册listener，第三个参数是检测的精确度
-        sensorManager.registerListener(lsn, sensor, SensorManager.SENSOR_DELAY_GAME);
+        sensorManager.registerListener(glistener, sensor, SensorManager.SENSOR_DELAY_GAME);
     }
     //-----------------------------------------------------------------------------
     
@@ -635,6 +586,67 @@ public class NoKeyBoardActivity extends Activity {
     @Override
     protected void onDestroy(){
         socketManager = null;
+        if (glistener != null) {
+            sensorManager.unregisterListener(glistener);
+            socketManager.close();
+            glistener = null;
+        }
+        socketManager = null;
         super.onDestroy();
+    }
+    
+    private class Glistener implements SensorEventListener {
+        // 实现接口的方法
+        @SuppressWarnings("deprecation")
+        public void onSensorChanged(SensorEvent e) {
+            // 得到各轴上的重力加速度
+            x = e.values[SensorManager.DATA_X];
+            y = e.values[SensorManager.DATA_Y];
+            z = e.values[SensorManager.DATA_Z];
+            
+            //-----------------------------------------------------
+            if (z > 8 && z < 0) {//判断手机的位置是否正确
+                Toast.makeText(getApplicationContext(), "请保持手机的垂直放置", Toast.LENGTH_SHORT).show();
+                TurnD = 0;
+            }else {
+                if (y < 1 && y > -1) {//直线运动
+                    TurnD = 0;
+                }else {
+                    double degree = x/y;
+                    if (degree < 0) {
+                        isTurnLeft = true;
+                        if (degree >= -1) {//偏转角大于45度(左)
+                            TurnD = 100;
+                        }else {
+                            TurnD = (int) -(100/degree);
+                            if (TurnD < 16) {//确保指令传输的正确性
+                                TurnD = 16;
+                            }
+                        }
+                    }else if (degree > 0) {
+                        isTurnLeft = false;
+                        if (degree <= 1) {//偏转角大于45度(右)
+                            TurnD = 100;
+                        }else {
+                            TurnD = (int) (100/degree);
+                            if (TurnD < 16) {//确保指令传输的正确性
+                                TurnD = 16;
+                            }
+                        }
+                    }
+                }
+            }
+            //判断方向
+            if (isTurnLeft) {
+                TurnD = -TurnD;
+            }
+            Action_Emotor action_Emotor = Action_Emotor.getInstance();
+            action_Emotor.setX(TurnD);
+            //Log.e(String.valueOf(TurnD), String.valueOf(isTurnLeft));
+            //----------打印值
+            //Toast.makeText(getApplicationContext(), String.valueOf(x) + ":" +String.valueOf(y) + ":" + String.valueOf(z), Toast.LENGTH_SHORT).show();
+        }
+            
+        public void onAccuracyChanged(Sensor s, int accuracy) {}
     }
 }

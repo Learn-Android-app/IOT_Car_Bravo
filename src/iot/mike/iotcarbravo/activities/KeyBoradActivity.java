@@ -201,6 +201,7 @@ public class KeyBoradActivity extends Activity {
 					getInstance().getOrder());
 			socketManager.sendOrder(Action_Steer.
 					getInstance().getOrder());
+			socketManager.close();
 			super.onDestroy();
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -216,7 +217,7 @@ public class KeyBoradActivity extends Activity {
         @Override
         public void run() {
             try{
-                socketManager.sendOrder(control_GPS.getOrder());
+                //socketManager.sendOrder(control_GPS.getOrder());
             } catch(Exception e) {
                 
             }
@@ -417,6 +418,7 @@ public class KeyBoradActivity extends Activity {
 	private Handler MainctivityHandler_KeyBoard = new Handler(){
 		@Override
 		public void handleMessage(Message message){
+		    try{
 			switch (message.what) {
 				case ResultType.Result_GPS:{
 					Result_GPS result_GPS = Result_GPS.getInstance();
@@ -532,6 +534,9 @@ public class KeyBoradActivity extends Activity {
 					break;
 				}
 			}
+		    }catch (Exception e) {
+		        e.printStackTrace();
+		    }
 		}
 	};
 	

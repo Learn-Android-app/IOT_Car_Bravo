@@ -1,5 +1,7 @@
 package h264.com;
 
+import iot.mike.iotcarbravo.setting.SettingData;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -89,7 +91,12 @@ public class VView extends View  implements Runnable{
         super.onDraw(canvas);   
         VideoBit.copyPixelsFromBuffer(buffer);//makeBuffer(data565, N));
         Matrix matrix = new Matrix();
-        matrix.postScale((float)1.5,	(float)1.5);
+        if (SettingData.CtrlMode == SettingData.KeyBoard) {
+            matrix.postScale((float)2, (float)2);
+        }else {
+            matrix.postScale((float)1.5, (float)1.5);
+        }
+        
         canvas.drawBitmap(VideoBit, matrix, null); 
     }
     
