@@ -636,15 +636,21 @@ public class KeyBoradActivity extends Activity {
             Ctrl_Z = X_Degree;
             
             if (Ctrl_Z < 105 && Ctrl_Z > 75) {
-				Log.e("D", "X:" + Ctrl_X + " Y:" + Ctrl_Y);
 				Action_Steer action_Steer = Action_Steer.getInstance();
-				action_Steer.setA(((int)(Ctrl_X)/10)*10);
-				action_Steer.setB(((int)(Ctrl_Y - 90)/10)*10);
-				try {
-					socketManager.sendOrder(action_Steer.getOrder());
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
+				if ((int)action_Steer.getA() == ((int)Ctrl_X/10)*10 
+				        && (int)action_Steer.getB() == ((int)(Ctrl_Y - 90)/10)*10) {
+                    return;
+                }else {
+                    action_Steer.setA(((int)(Ctrl_X)/10)*10);
+                    action_Steer.setB(((int)(Ctrl_Y - 90)/10)*10);
+                    Log.e("Dgree", "X:" + Ctrl_X + " " + action_Steer.getA()
+                            + " Y:" + Ctrl_Y + " " + action_Steer.getB());
+                    try {
+                        socketManager.sendOrder(action_Steer.getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
 			}else {
 				Toast.makeText(getApplicationContext(), "不要倾斜头部", Toast.LENGTH_SHORT).show();
 			}
