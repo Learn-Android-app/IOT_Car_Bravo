@@ -59,14 +59,14 @@ public class KeyBoradActivity extends Activity {
 	private Button         CameraRESER_BTN;
 	
 	private OfflineMapView mapView;
-	private VView   videoView;
+	private VView          videoView;
 	
-	private SensorManager sensorMgr;	// 感应器管理器
-	private Sensor G_sensor, M_sensor;	// 得到方向感应器
-	private float gx, gy, gz, ox;		// 定义各坐标轴上的重力加速度
+	private SensorManager  sensorMgr;	// 感应器管理器
+	private Sensor         G_sensor, M_sensor;	// 得到方向感应器
+	private float          gx, gy, gz, ox;		// 定义各坐标轴上的重力加速度
 	
-	private float degree = 0;
-	private float X_Degree, Y_Degree;	//两个值
+	private float          degree = 0;
+	private float          X_Degree, Y_Degree;	//两个值
 	
 	private volatile static float  pre_direction        = 0;
 	private volatile static float  current_direction    = 0;
@@ -183,6 +183,18 @@ public class KeyBoradActivity extends Activity {
 		        gPSDataTimer.cancel();
             }
 		    gPSDataTimer = null;
+		    
+		    if (gListener != null) {
+		        sensorMgr.unregisterListener(gListener);
+		        gListener = null;
+            }
+		    if (mListener != null) {
+		        sensorMgr.unregisterListener(mListener);
+		        mListener = null;
+            }
+		    
+		    sensorMgr = null;
+		    
 			Action_Emotor.getInstance().reset();
 			Action_Steer.getInstance().reset();
 			socketManager.sendOrder(Action_Emotor.
@@ -465,6 +477,13 @@ public class KeyBoradActivity extends Activity {
                         dialog.cancel();
                         dialog = null;
                     }
+				    Action_USBCamera.getInstance().setMode(CameraMode.on);
+				    try {
+                        socketManager.sendOrder(Action_USBCamera.getInstance().getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+				    
 				    sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
                     videoView.playVideo();
                     createGravitySensor();
@@ -612,17 +631,17 @@ public class KeyBoradActivity extends Activity {
             Ctrl_Z = X_Degree;
             
             if (Ctrl_Z < 105 && Ctrl_Z > 75) {
-				//Log.e("D", "X:" + Ctrl_X + " Y:" + Ctrl_Y);
+				Log.e("D", "X:" + Ctrl_X + " Y:" + Ctrl_Y);
 				Action_Steer action_Steer = Action_Steer.getInstance();
-				action_Steer.setA((int)Ctrl_X);
-				action_Steer.setB((int)Ctrl_Y - 90);
+				action_Steer.setA(((int)(Ctrl_X)/10)*10);
+				action_Steer.setB(((int)(Ctrl_Y - 90)/10)*10);
 				try {
 					socketManager.sendOrder(action_Steer.getOrder());
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
 			}else {
-				Toast.makeText(getApplicationContext(), "不要倾斜头部", Toast.LENGTH_LONG).show();
+				Toast.makeText(getApplicationContext(), "不要倾斜头部", Toast.LENGTH_SHORT).show();
 			}
 		}
     }

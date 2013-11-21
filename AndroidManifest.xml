@@ -29,11 +29,6 @@
         <activity
             android:name="iot.mike.iotcarbravo.activities.StartActivity"
             android:label="@string/title_activity_start" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name="iot.mike.iotcarbravo.activities.TestActivity"
@@ -42,6 +37,13 @@
         <activity
             android:name="iot.mike.iotcarbravo.activities.NoKeyBoardActivity"
             android:label="@string/title_activity_no_key_board" android:launchMode="singleInstance" android:screenOrientation="landscape" android:theme="@android:style/Theme.Holo.NoActionBar">
+        </activity>
+        <activity android:name="WelcomeActivity" android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen">
+            
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
     </application>
 
