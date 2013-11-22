@@ -17,7 +17,7 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:layout_marginTop="123dp"
-        android:text="使用外接键盘" android:layout_alignBottom="20dp"/>
+        android:text="使用外接键盘"/>
 
     <Button
         android:id="@+id/nokeyboard_BTN"
