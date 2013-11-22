@@ -6,25 +6,36 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="@drawable/purple"
     tools:context=".StartActivity" >
 
     <Button
         android:id="@+id/keyboard_BTN"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="150dp"
+        android:layout_height="80dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="30dp"
-        android:text="使用外接键盘" />
+        android:layout_marginTop="123dp"
+        android:text="使用外接键盘" android:layout_alignBottom="20dp"/>
 
     <Button
         android:id="@+id/nokeyboard_BTN"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="150dp"
+        android:layout_height="80dp"
         android:layout_alignLeft="@+id/keyboard_BTN"
-        android:layout_alignRight="@+id/keyboard_BTN"
+        android:layout_alignParentRight="true"
         android:layout_below="@+id/keyboard_BTN"
         android:text="不使用外接键盘" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="120dp"
+        android:layout_height="40dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="19dp"
+        android:text="选择模式"
+        android:textSize="25dp" />
 
 </RelativeLayout>
