@@ -47,6 +47,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_below="@+id/mapView"
+        android:layout_marginTop="5dp"
         android:layout_toLeftOf="@+id/videoView"
         android:orientation="vertical" >
 

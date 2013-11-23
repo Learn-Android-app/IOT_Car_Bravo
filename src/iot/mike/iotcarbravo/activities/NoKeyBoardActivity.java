@@ -588,8 +588,10 @@ public class NoKeyBoardActivity extends Activity {
         socketManager = null;
         if (glistener != null) {
             sensorManager.unregisterListener(glistener);
-            socketManager.close();
             glistener = null;
+        }
+        if (socketManager != null) {
+             socketManager.close();
         }
         socketManager = null;
         super.onDestroy();

@@ -195,13 +195,16 @@ public class KeyBoradActivity extends Activity {
 		    
 		    sensorMgr = null;
 		    
-			Action_Emotor.getInstance().reset();
-			Action_Steer.getInstance().reset();
-			socketManager.sendOrder(Action_Emotor.
-					getInstance().getOrder());
-			socketManager.sendOrder(Action_Steer.
-					getInstance().getOrder());
-			socketManager.close();
+		    if (socketManager != null) {
+		        Action_Emotor.getInstance().reset();
+	            Action_Steer.getInstance().reset();
+	            socketManager.sendOrder(Action_Emotor.
+	                    getInstance().getOrder());
+	            socketManager.sendOrder(Action_Steer.
+	                    getInstance().getOrder());
+	            socketManager.close();
+            }
+			socketManager = null;
 			super.onDestroy();
 		} catch (JSONException e) {
 			e.printStackTrace();
