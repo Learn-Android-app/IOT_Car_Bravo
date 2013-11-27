@@ -63,17 +63,17 @@ public class KeyBoradActivity extends Activity {
 	
 	private SensorManager  sensorMgr;	// 感应器管理器
 	private Sensor         G_sensor, M_sensor;	// 得到方向感应器
-	private float          gx, gy, gz, ox;		// 定义各坐标轴上的重力加速度
+	private volatile static float          gx, gy, gz, ox;		// 定义各坐标轴上的重力加速度
 	
-	private float          degree = 0;
-	private float          X_Degree, Y_Degree;	//两个值
+	private volatile static float          degree = 0;
+	private volatile static float          X_Degree, Y_Degree;	//两个值
 	
 	private volatile static float  pre_direction        = 0;
 	private volatile static float  current_direction    = 0;
 	
-	private volatile float Ctrl_X = 0;	
-	private volatile float Ctrl_Y = 0; 
-	private volatile float Ctrl_Z = 0;//判断位
+	private volatile static float Ctrl_X = 0;	
+	private volatile static float Ctrl_Y = 0; 
+	private volatile static float Ctrl_Z = 0;//判断位
 	
 	
 	private Timer addSpeedTimer = null;
@@ -142,6 +142,11 @@ public class KeyBoradActivity extends Activity {
              //右正左负
              if (event.sensor.getType() == Sensor.TYPE_ORIENTATION){
                  ox = event.values[SensorManager.DATA_X];
+                 float x = event.values[SensorManager.DATA_X]; 
+                 float y = event.values[SensorManager.DATA_Y]; 
+                 float z = event.values[SensorManager.DATA_Z];
+                 Log.v("x,y,z", x+" "+y+" "+z);
+                 
                  current_direction = ox;
                  if(pre_direction < 180){    //这个初始角的位置小于180度
                      if(ox > (pre_direction + 180) 
@@ -209,6 +214,8 @@ public class KeyBoradActivity extends Activity {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
+		this.finish();
+		super.onDestroy();
 		
 	}
 	
@@ -230,10 +237,11 @@ public class KeyBoradActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		socketManager.startVideoServer();
 		if (SettingData.CtrlMode == SettingData.KeyBoard) {
 			setContentView(R.layout.activity_keyboard);
 			initKeyBoardViews();
+			socketManager = SocketManager.getInstance();
+	        socketManager.startVideoServer();
 			socketManager.setKeyBoardActivityHandler(MainctivityHandler_KeyBoard);
 		}else {
 			Intent intent = new Intent(getApplicationContext(),
@@ -566,19 +574,29 @@ public class KeyBoradActivity extends Activity {
                 if (action_USBCamera.getMode() == CameraMode.on) {
                     action_OKCamera.setMode(CameraMode.on);
                     action_USBCamera.setMode(CameraMode.off);
+                    try {
+                        socketManager.sendOrder(action_USBCamera.getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        socketManager.sendOrder(action_OKCamera.getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }else {
                     action_OKCamera.setMode(CameraMode.off);
                     action_USBCamera.setMode(CameraMode.on);
-                }
-                try {
-                    socketManager.sendOrder(action_OKCamera.getOrder());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    socketManager.sendOrder(action_USBCamera.getOrder());
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    try {
+                        socketManager.sendOrder(action_OKCamera.getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        socketManager.sendOrder(action_USBCamera.getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
                 Toast.makeText(getApplicationContext(), 
                         "切换摄像头成功！", 
@@ -646,8 +664,6 @@ public class KeyBoradActivity extends Activity {
                 }else {
                     action_Steer.setA(((int)(Ctrl_X)/10)*10);
                     action_Steer.setB(((int)(Ctrl_Y - 90)/10)*10);
-                    Log.e("Dgree", "X:" + Ctrl_X + " " + action_Steer.getA()
-                            + " Y:" + Ctrl_Y + " " + action_Steer.getB());
                     try {
                         socketManager.sendOrder(action_Steer.getOrder());
                     } catch (JSONException e) {

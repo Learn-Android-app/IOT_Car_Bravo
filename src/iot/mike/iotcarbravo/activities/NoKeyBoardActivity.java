@@ -33,6 +33,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -98,10 +99,11 @@ public class NoKeyBoardActivity extends Activity {
 			finish();
 		}
 		super.onCreate(savedInstanceState);
-		socketManager.setKeyBoardActivityHandler(MainctivityHandler_NoKeyBoard);
 		setContentView(R.layout.activity_nokeyboard);
-		socketManager.startVideoServer();
 		initNOKeyBoardViews();
+		socketManager = SocketManager.getInstance();
+        socketManager.setKeyBoardActivityHandler(MainctivityHandler_NoKeyBoard);
+		socketManager.startVideoServer();
 	}
 
 	@Override
@@ -594,6 +596,7 @@ public class NoKeyBoardActivity extends Activity {
              socketManager.close();
         }
         socketManager = null;
+        this.finish();
         super.onDestroy();
     }
     
@@ -605,6 +608,8 @@ public class NoKeyBoardActivity extends Activity {
             x = e.values[SensorManager.DATA_X];
             y = e.values[SensorManager.DATA_Y];
             z = e.values[SensorManager.DATA_Z];
+            
+            Log.e("x,y,z", x+" "+y+" "+z+" "+x/z+" "+x/y +" "+z/y);
             
             //-----------------------------------------------------
             if (z > 8 && z < 0) {//判断手机的位置是否正确
@@ -620,7 +625,7 @@ public class NoKeyBoardActivity extends Activity {
                         if (degree >= -1) {//偏转角大于45度(左)
                             TurnD = 100;
                         }else {
-                            TurnD = (int) -(100/degree);
+                            TurnD = (int)-(100/degree);
                             if (TurnD < 16) {//确保指令传输的正确性
                                 TurnD = 16;
                             }
@@ -644,7 +649,6 @@ public class NoKeyBoardActivity extends Activity {
             }
             Action_Emotor action_Emotor = Action_Emotor.getInstance();
             action_Emotor.setX(TurnD);
-            //Log.e(String.valueOf(TurnD), String.valueOf(isTurnLeft));
             //----------打印值
             //Toast.makeText(getApplicationContext(), String.valueOf(x) + ":" +String.valueOf(y) + ":" + String.valueOf(z), Toast.LENGTH_SHORT).show();
         }

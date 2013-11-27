@@ -39,6 +39,9 @@ public class SocketManager {
 	}
 	
 	public static SocketManager getInstance(){
+	    if (SocketManagerHolder.socketManager == null) {
+            SocketManagerHolder.socketManager = new SocketManager();
+        }
 		return SocketManagerHolder.socketManager;
 	}
 	
