@@ -69,7 +69,6 @@ public class SocketManager {
 	                        break;
 	                    }
 	                }
-	                
 	            }
 	        });
 	        thread.start();
@@ -106,6 +105,9 @@ public class SocketManager {
 	 */
 	public void setKeyBoardActivityHandler(Handler handler){
 		MainActivityHandler = null;
+		if (handler == null) {
+            Log.e("Handler SocketManager", "NULL!!!");
+        }
 		MainActivityHandler = handler;
 	}
 	
@@ -140,6 +142,10 @@ public class SocketManager {
 					NetUtil.sendList(writer);
 					Message message = new Message();
 					message.what = NETOK;
+					if (MainActivityHandler == null) {
+                        Log.e("Handler is NULL!!!!", "ATTENTOION");
+                        return;
+                    }
 					MainActivityHandler.sendMessage(message);
 					startVideoServer();
 				} catch (UnknownHostException e) {
@@ -224,9 +230,10 @@ public class SocketManager {
                 writer.write(Action_List.getInstance().getOrder());
                 return true;
             } catch (IOException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
+                Log.e("数据写出错误！", "SocketManager");
             } catch (JSONException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
             }
             return false;
         }
@@ -236,10 +243,17 @@ public class SocketManager {
 	public void close() {
         try {
             MainSocket.close();
-            videoSocket.close();
             SocketManagerHolder.socketManager = null;
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+        }
+        try {
+            videoSocket.close();
+            videoSocket = null;
+            reader = null;
+            writer = null;
+        } catch (Exception e) {
+            
         }
     }
 	

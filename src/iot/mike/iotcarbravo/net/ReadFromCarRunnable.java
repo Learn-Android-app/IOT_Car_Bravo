@@ -12,7 +12,6 @@ import org.json.JSONException;
 
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
 public class ReadFromCarRunnable implements Runnable {
 	private BufferedReader reader;
@@ -41,7 +40,6 @@ public class ReadFromCarRunnable implements Runnable {
 				if (inputData.length() !=0) {
 					try {
 						int type = NetUtil.confirmType(inputData);
-						Log.v("收到的指令", inputData);
 						//处理命令
 						dealJsonOrder(inputData, type);
 					} catch (JSONException e) {

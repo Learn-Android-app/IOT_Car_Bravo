@@ -51,6 +51,7 @@ import android.widget.ToggleButton;
  * @date 2013-08-06
  */
 public class KeyBoradActivity extends Activity {
+    //[s]
 	private SocketManager  socketManager = SocketManager.getInstance();
 	
 	private Dialog         dialog;	
@@ -180,7 +181,7 @@ public class KeyBoradActivity extends Activity {
 	
 	private GListener gListener    = null;
 	private MListener mListener    = null;
-	
+	//[e]
 	@Override
 	public void onDestroy() {
 		try {
@@ -210,7 +211,6 @@ public class KeyBoradActivity extends Activity {
 	            socketManager.close();
             }
 			socketManager = null;
-			super.onDestroy();
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -477,7 +477,6 @@ public class KeyBoradActivity extends Activity {
 				case ResultType.ReadyOK:{
 					if (dialog != null) {
 						dialog.dismiss();
-						dialog.cancel();
 						dialog = null;
 					}
 					videoView.playVideo();
@@ -487,7 +486,6 @@ public class KeyBoradActivity extends Activity {
 				    socketManager.startVideoServer();
 				    if (dialog != null) {
                         dialog.dismiss();
-                        dialog.cancel();
                         dialog = null;
                     }
 				    Action_USBCamera.getInstance().setMode(CameraMode.on);
@@ -519,7 +517,6 @@ public class KeyBoradActivity extends Activity {
 				    Log.e("SocketManager", "Net Error");
 				    if (dialog != null) {
                         dialog.dismiss();
-                        dialog.cancel();
                         dialog = null;
                     }
 				    CarSTATE_TBTN.setChecked(false);

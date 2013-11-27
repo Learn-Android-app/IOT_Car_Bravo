@@ -33,7 +33,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -75,6 +74,107 @@ public class NoKeyBoardActivity extends Activity {
 	private Glistener glistener;
 	private Dialog dialog; 
 	
+	private Handler MainctivityHandler_NoKeyBoard = new Handler(){
+        @Override
+        public void handleMessage(Message message){
+            try{
+            switch (message.what) {
+                case ResultType.Result_GPS:{
+                    Result_GPS result_GPS = Result_GPS.getInstance();
+                    mapView.setLocation(result_GPS.getLongtitude(), 
+                            result_GPS.getLatitude(), 
+                            18, 
+                            result_GPS.getSpeed(), 
+                            result_GPS.getHeight());
+                    break;
+                }
+                
+                case ResultType.Result_OKCamera:{
+                    Result_OKCamera result_OKCamera = 
+                            Result_OKCamera.getInstance();
+                    socketManager.sendVideo(result_OKCamera.getFrameData());
+                    break;
+                }
+                
+                case ResultType.Result_List:{
+                    Result_List result_List = 
+                            Result_List.getInstance();
+                    String[] lists = result_List.getParams();
+                    String list_Str = "";
+                    for (String list : lists) {
+                        list_Str += list + "\n";
+                    }
+                    Toast.makeText(getApplicationContext(), 
+                            "小车连接成功！", Toast.LENGTH_LONG).show();
+                    break;
+                }
+                
+                case ResultType.Result_USBCamera:{
+                    Result_USBCamera result_USBCamera = 
+                            Result_USBCamera.getInstance();
+                    socketManager.sendVideo(result_USBCamera.getFrameData());
+                    break;
+                }
+                
+                case ResultType.StartLink:{
+                    socketManager.setKeyBoardActivityHandler(MainctivityHandler_NoKeyBoard);
+                    socketManager.startLink();
+                    break;
+                }
+                
+                case ResultType.ReadyOK:{
+                    break;
+                }
+                
+                case SocketManager.NETERROR:{
+                    if (dialog != null) {
+                        dialog.dismiss();
+                        dialog.cancel();
+                        dialog = null;
+                    }
+                    Toast.makeText(getApplicationContext(), "小车未能连接！", Toast.LENGTH_SHORT).show();
+                    startLink_TBN.setChecked(false);
+                    startLink_TBN.setEnabled(true);
+                    break;
+                }
+                
+                case SocketManager.NETOK:{
+                    if (dialog != null) {
+                        dialog.dismiss();
+                        dialog.cancel();
+                        dialog = null;
+                    }
+                    try {
+                        Action_USBCamera.getInstance().setMode(CameraMode.on);
+                        socketManager.sendOrder(Action_USBCamera.getInstance().getOrder());
+                        socketManager.sendOrder(Action_List.getInstance().getOrder());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    if (gPSDataTimer != null) {
+                        gPSDataTimer.cancel();
+                    }
+                    gPSDataTimer = new Timer();
+                    gpsTask = null;
+                    gpsTask = new GPSTask();
+                    gPSDataTimer.schedule(gpsTask, 50, 500);
+                    
+                    videoView.playVideo();
+                    startLink_TBN.setChecked(true);
+                    startLink_TBN.setEnabled(false);
+                    break;
+                }
+                default:{
+                    
+                    break;
+                }
+            }
+            }catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+	
 	//GPS信息
 	private Control_GPS control_GPS = new Control_GPS();
 	private Timer gPSDataTimer;
@@ -102,8 +202,8 @@ public class NoKeyBoardActivity extends Activity {
 		setContentView(R.layout.activity_nokeyboard);
 		initNOKeyBoardViews();
 		socketManager = SocketManager.getInstance();
-        socketManager.setKeyBoardActivityHandler(MainctivityHandler_NoKeyBoard);
-		socketManager.startVideoServer();
+		socketManager.setKeyBoardActivityHandler(MainctivityHandler_NoKeyBoard);
+        socketManager.startVideoServer();
 	}
 
 	@Override
@@ -124,7 +224,11 @@ public class NoKeyBoardActivity extends Activity {
                     socketManager = SocketManager.getInstance();
                     socketManager.startLink();
                     dialog = onCreateDialog(1);
-                    dialog.show();
+                    if (dialog == null) {
+                        dialog.show();
+                    }else {
+                        Toast.makeText(getApplicationContext(), "正在连接...", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -237,7 +341,6 @@ public class NoKeyBoardActivity extends Activity {
                         sendOrderTimer.schedule(sOrderTimerTask, 0, 500);
 					    break;
 					}
-					
 					case R.id.camera_DOWN_BTN:{
 						Action_Steer action_Steer = Action_Steer.getInstance();
 						action_Steer.redB();
@@ -396,107 +499,7 @@ public class NoKeyBoardActivity extends Activity {
 			return false;
 		}
     }
-	
-	private Handler MainctivityHandler_NoKeyBoard = new Handler(){
-		@Override
-		public void handleMessage(Message message){
-		    try{
-			switch (message.what) {
-				case ResultType.Result_GPS:{
-					Result_GPS result_GPS = Result_GPS.getInstance();
-					mapView.setLocation(result_GPS.getLongtitude(), 
-							result_GPS.getLatitude(), 
-							18, 
-							result_GPS.getSpeed(), 
-							result_GPS.getHeight());
-					break;
-				}
-				
-				case ResultType.Result_OKCamera:{
-					Result_OKCamera result_OKCamera = 
-							Result_OKCamera.getInstance();
-					socketManager.sendVideo(result_OKCamera.getFrameData());
-					break;
-				}
-				
-				case ResultType.Result_List:{
-					Result_List result_List = 
-							Result_List.getInstance();
-					String[] lists = result_List.getParams();
-					String list_Str = "";
-					for (String list : lists) {
-						list_Str += list + "\n";
-					}
-					Toast.makeText(getApplicationContext(), 
-							"小车连接成功！", Toast.LENGTH_LONG).show();
-					break;
-				}
-				
-				case ResultType.Result_USBCamera:{
-					Result_USBCamera result_USBCamera = 
-							Result_USBCamera.getInstance();
-					socketManager.sendVideo(result_USBCamera.getFrameData());
-					break;
-				}
-				
-				case ResultType.StartLink:{
-					socketManager.startLink();
-					break;
-				}
-				
-				case ResultType.ReadyOK:{
-					break;
-				}
-				
-				case SocketManager.NETERROR:{
-				    if (dialog != null) {
-                        dialog.dismiss();
-                        dialog.cancel();
-                        dialog = null;
-                    }
-				    Toast.makeText(getApplicationContext(), "小车未能连接！", Toast.LENGTH_SHORT).show();
-				    startLink_TBN.setChecked(false);
-				    startLink_TBN.setEnabled(true);
-				    break;
-				}
-				
-				case SocketManager.NETOK:{
-				    if (dialog != null) {
-                        dialog.dismiss();
-                        dialog.cancel();
-                        dialog = null;
-                    }
-				    try {
-				        Action_USBCamera.getInstance().setMode(CameraMode.on);
-				        socketManager.sendOrder(Action_USBCamera.getInstance().getOrder());
-                        socketManager.sendOrder(Action_List.getInstance().getOrder());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-				    if (gPSDataTimer != null) {
-                        gPSDataTimer.cancel();
-                    }
-				    gPSDataTimer = new Timer();
-				    gpsTask = null;
-				    gpsTask = new GPSTask();
-				    gPSDataTimer.schedule(gpsTask, 50, 500);
-				    
-				    videoView.playVideo();
-                    startLink_TBN.setChecked(true);
-                    startLink_TBN.setEnabled(false);
-				    break;
-				}
-				default:{
-					
-					break;
-				}
-			}
-		    }catch (Exception e) {
-		        e.printStackTrace();
-		    }
-		}
-	};
-	
+		
 	//--------------------------------------------------------------------------------
     //设置感应器
 	private boolean isTurnLeft =false;	//小车是否右拐
@@ -586,8 +589,7 @@ public class NoKeyBoardActivity extends Activity {
     }
     
     @Override
-    protected void onDestroy(){
-        socketManager = null;
+    public void onDestroy(){
         if (glistener != null) {
             sensorManager.unregisterListener(glistener);
             glistener = null;
@@ -597,6 +599,7 @@ public class NoKeyBoardActivity extends Activity {
         }
         socketManager = null;
         this.finish();
+        MainctivityHandler_NoKeyBoard = null;
         super.onDestroy();
     }
     
@@ -608,8 +611,6 @@ public class NoKeyBoardActivity extends Activity {
             x = e.values[SensorManager.DATA_X];
             y = e.values[SensorManager.DATA_Y];
             z = e.values[SensorManager.DATA_Z];
-            
-            Log.e("x,y,z", x+" "+y+" "+z+" "+x/z+" "+x/y +" "+z/y);
             
             //-----------------------------------------------------
             if (z > 8 && z < 0) {//判断手机的位置是否正确
