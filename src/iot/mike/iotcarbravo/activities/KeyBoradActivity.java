@@ -458,7 +458,7 @@ public class KeyBoradActivity extends Activity {
 						list_Str += list + "\n";
 					}
 					Toast.makeText(getApplicationContext(), 
-							list_Str, Toast.LENGTH_LONG).show();
+					        "小车连接成功！", Toast.LENGTH_LONG).show();
 					break;
 				}
 				
