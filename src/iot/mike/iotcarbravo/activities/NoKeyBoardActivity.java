@@ -224,7 +224,7 @@ public class NoKeyBoardActivity extends Activity {
                     socketManager = SocketManager.getInstance();
                     socketManager.startLink();
                     dialog = onCreateDialog(1);
-                    if (dialog == null) {
+                    if (dialog != null) {
                         dialog.show();
                     }else {
                         Toast.makeText(getApplicationContext(), "正在连接...", Toast.LENGTH_SHORT).show();
