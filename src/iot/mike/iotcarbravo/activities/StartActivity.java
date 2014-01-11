@@ -91,7 +91,7 @@ public class StartActivity extends Activity {
 		SettingData.CarIP = spc.getString("CarIP", "192.168.0.232");
 		SettingData.CarMainPort = Integer.valueOf(spc.getString("CarMainPort", "7890"));
 		
-    	Log.e("读取的数据：", "IP:" + SettingData.CarIP +"PORT:" + SettingData.CarMainPort);
+    	Log.e("读取的数据：", "IP:" + SettingData.CarIP + "PORT:" + SettingData.CarMainPort);
 	}
 	
 	private Thread loadThread = new Thread(new Runnable() {
